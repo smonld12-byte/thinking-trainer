@@ -1,6 +1,5 @@
-# Personal version (has embedded API key)
+# Personal version (has embedded API key — NEVER commit)
 thinking-trainer.html
-thinking-trainer-share.html
 
 # Mac
 .DS_Store
