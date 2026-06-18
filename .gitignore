@@ -1,0 +1,9 @@
+# Personal version (has embedded API key)
+thinking-trainer.html
+thinking-trainer-share.html
+
+# Mac
+.DS_Store
+
+# Python
+__pycache__/
