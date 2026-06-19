@@ -912,6 +912,8 @@ async function saveHistory(entry) {
       score_source: entry.scoreSource || null,
       ai_feedback: entry.aiFeedback || null,
       ai_comment: entry.aiComment || null,
+      optimized_structure: entry.optimizedStructure || null,
+      optimized_sentences: entry.optimizedSentences || null,
       time_spent: entry.timeSpent || 0,
       created_at: new Date().toISOString()
     };
@@ -2343,7 +2345,9 @@ async function scoreHistoryRecord(index) {
       total_score: avg,
       score_source: 'ai',
       ai_feedback: result.feedback,
-      ai_comment: result.overall_comment || ''
+      ai_comment: result.overall_comment || '',
+      optimized_structure: result.optimized_structure || null,
+      optimized_sentences: result.optimized_sentences || null
     });
 
     if (!ok) {
