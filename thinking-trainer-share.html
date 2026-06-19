@@ -921,11 +921,11 @@ async function saveHistory(entry) {
       method: 'POST',
       body: JSON.stringify(row)
     });
-    // Update last active
-    await supabaseFetch(`users?id=eq.${currentUser.id}`, {
+    // Update last active (non-critical, don't fail on error)
+    supabaseFetch(`users?id=eq.${currentUser.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ last_active: new Date().toISOString() })
-    });
+    }).catch(() => {});
     return true;
   } catch (e) {
     console.error('saveHistory error:', e);
