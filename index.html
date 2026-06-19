@@ -3516,7 +3516,7 @@ async function loadReadingContent(category) {
   readingState.loading = true;
 
   try {
-    const prompt = buildReadingPrompt(category);
+    const prompt = buildReadingPrompt(category, Date.now());
     const apiKey = getApiKey();
     const apiUrl = getApiUrl();
     const model = getModel();
@@ -3556,8 +3556,8 @@ async function loadReadingContent(category) {
   readingState.loading = false;
 }
 
-function buildReadingPrompt(category) {
-  const base = '你是一位资深设计教育家，拥有20年设计行业经验，精通室内设计、建筑设计、风水、设计史。';
+function buildReadingPrompt(category, seed) {
+  const base = `你是一位资深设计教育家。当前种子值：${seed}。请务必选择与之前不同的内容，每次都要有新意。`;
 
   if (category === 'case') {
     return base + `请深度拆解一个经典的设计案例（可以是室内、建筑、产品、园林）。
@@ -3571,6 +3571,8 @@ function buildReadingPrompt(category) {
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<建议关联的训练模式：needInsight/essence/pyramid/multiAngle/prep/connection/scenario>"
 }
+【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
+【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
 直接返回JSON，用中文。`;
   }
 
@@ -3592,6 +3594,7 @@ function buildReadingPrompt(category) {
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<建议关联的训练模式>"
 }
+【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
 直接返回JSON，用中文。`;
   }
 
@@ -3605,7 +3608,9 @@ function buildReadingPrompt(category) {
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<建议关联的训练模式>"
 }
-要求：去玄学化，用理性设计语言解释风水的合理性。直接返回JSON，用中文。`;
+【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
+要求：去玄学化，用理性设计语言解释风水的合理性。【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
+直接返回JSON，用中文。`;
   }
 
   if (category === 'technique') {
@@ -3618,6 +3623,7 @@ function buildReadingPrompt(category) {
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<建议关联的训练模式>"
 }
+【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
 直接返回JSON，用中文。`;
   }
 
@@ -3631,6 +3637,7 @@ function buildReadingPrompt(category) {
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<建议关联的训练模式>"
 }
+【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
 直接返回JSON，用中文。`;
   }
 
@@ -3646,6 +3653,7 @@ function buildReadingPrompt(category) {
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<needInsight/essence/pyramid/multiAngle/prep/connection/scenario 之一>"
 }
+【重要】种子值不同意味着要选不同的案例/话题。不要重复之前可能选过的内容。每次都要挑选一个不同的、有代表性的设计案例/知识点/建筑。
 直接返回JSON，用中文。`;
   }
 
@@ -3676,7 +3684,7 @@ function renderReadingContent() {
   const cat = READING_CATEGORIES.find(x => x.key === readingState.category);
   document.getElementById('reading-content').innerHTML = `
     <div class="reading-card">
-      ${(c.imageUrl || c.imageQuery) ? `<img src="${c.imageUrl || 'https://source.unsplash.com/featured/?' + encodeURIComponent(c.imageQuery || 'design') + '&w=800&h=400&fit=crop'}" alt="" class="reading-img" onerror="this.style.display='none'" loading="lazy">` : ''}
+      ${(c.imageUrl || c.imageQuery) ? `<img src="${c.imageUrl || 'https://loremflickr.com/800/400/' + encodeURIComponent(c.imageQuery || 'design') + '?random=' + Date.now()}" alt="" class="reading-img" onerror="this.style.display='none'" loading="lazy">` : ''}
       <div class="rc-title">${cat ? cat.icon + ' ' : ''}${c.title || ''}</div>
       <div class="rc-body">${(c.content || '').replace(/\n/g, '<br>')}</div>
       ${c.takeaway ? `<div class="rc-takeaway">${c.takeaway}</div>` : ''}
