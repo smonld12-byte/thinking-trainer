@@ -915,9 +915,6 @@ async function saveHistory(entry) {
       time_spent: entry.timeSpent || 0,
       created_at: new Date().toISOString()
     };
-    // Only include optional columns if they have values (avoid 400 if column missing)
-    if (entry.optimizedStructure) row.optimized_structure = entry.optimizedStructure;
-    if (entry.optimizedSentences) row.optimized_sentences = entry.optimizedSentences;
     await supabaseFetch('training_records', {
       method: 'POST',
       body: JSON.stringify(row)
@@ -2346,9 +2343,7 @@ async function scoreHistoryRecord(index) {
       total_score: avg,
       score_source: 'ai',
       ai_feedback: result.feedback,
-      ai_comment: result.overall_comment || '',
-      optimized_structure: result.optimized_structure || null,
-      optimized_sentences: result.optimized_sentences || null
+      ai_comment: result.overall_comment || ''
     });
 
     if (!ok) {
