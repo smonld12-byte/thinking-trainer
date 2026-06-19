@@ -912,11 +912,12 @@ async function saveHistory(entry) {
       score_source: entry.scoreSource || null,
       ai_feedback: entry.aiFeedback || null,
       ai_comment: entry.aiComment || null,
-      optimized_structure: entry.optimizedStructure || null,
-      optimized_sentences: entry.optimizedSentences || null,
       time_spent: entry.timeSpent || 0,
       created_at: new Date().toISOString()
     };
+    // Only include optional columns if they have values (avoid 400 if column missing)
+    if (entry.optimizedStructure) row.optimized_structure = entry.optimizedStructure;
+    if (entry.optimizedSentences) row.optimized_sentences = entry.optimizedSentences;
     await supabaseFetch('training_records', {
       method: 'POST',
       body: JSON.stringify(row)
@@ -1865,10 +1866,15 @@ async function saveAndNext() {
     pendingEntry.aiComment = aiResult.overall_comment;
     pendingEntry.optimizedStructure = aiResult.optimized_structure || '';
     pendingEntry.optimizedSentences = aiResult.optimized_sentences || '';
-    await saveHistory(pendingEntry);
+    const saved = await saveHistory(pendingEntry);
     pendingEntry = null;
     window._aiResult = null;
-    toast('AI 评分已保存 ✅');
+    if (saved) {
+      toast('AI 评分已保存 ✅');
+    } else {
+      toast('保存失败，请检查网络后重试');
+      return;
+    }
   } else if (Object.keys(currentRatings).length > 0) {
     // Save manual scores
     saveRating();
@@ -1886,10 +1892,14 @@ async function saveRating() {
   pendingEntry.scoreDims = dims.map(d => ({ key: d.key, label: d.label }));
   pendingEntry.totalScore = avg;
   pendingEntry.scoreSource = 'manual';
-  await saveHistory(pendingEntry);
+  const saved = await saveHistory(pendingEntry);
   pendingEntry = null;
-  toast('评分已保存 ✅');
-  setTimeout(() => nextExercise(), 500);
+  if (saved) {
+    toast('评分已保存 ✅');
+    setTimeout(() => nextExercise(), 500);
+  } else {
+    toast('保存失败，请检查网络后重试');
+  }
 }
 
 // ======== CHART ========
