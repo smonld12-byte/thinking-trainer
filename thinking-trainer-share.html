@@ -6,32 +6,16 @@
 <title>景行内部思维训练</title>
 <style>
 :root {
-  --gold: #b8942e;
-  --gold-dim: #8a6d20;
-  --radius: 14px;
-  --radius-sm: 10px;
-}
-/* Light (default) */
-:root {
   --bg: #f5f2eb;
   --bg-card: #ffffff;
   --bg-input: #f0ece4;
   --text: #1a1a1a;
   --text-dim: #8a8070;
+  --gold: #b8942e;
+  --gold-dim: #8a6d20;
   --border: #e0dcd4;
-  --shadow: rgba(0,0,0,.04);
-}
-/* Dark */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f0f0f;
-    --bg-card: #1a1a1a;
-    --bg-input: #222;
-    --text: #f0ebe0;
-    --text-dim: #a09888;
-    --border: #2a2a2a;
-    --shadow: rgba(0,0,0,.2);
-  }
+  --radius: 14px;
+  --radius-sm: 10px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; }
@@ -462,7 +446,7 @@ body {
 
 /* Reading room card on home */
 .home-reading-card {
-  background: linear-gradient(135deg, #1a1a20 0%, #1a1a18 100%);
+  background: linear-gradient(135deg, #faf8f2 0%, #f0ede4 100%);
   border: 1px solid var(--border); border-radius: var(--radius);
   padding: 20px; margin: 12px 0; cursor: pointer; text-align: left; transition: all .25s;
   color: var(--text); font-family: inherit; font-size: inherit; width: 100%;
