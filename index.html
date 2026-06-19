@@ -1727,54 +1727,57 @@ async function triggerAiScore() {
 
 function parseScoreResponse(text, dims) {
   try {
-    // Extract JSON from response (handle markdown code blocks)
     let jsonStr = text.trim();
     // Strip outer markdown fences
     if (jsonStr.startsWith('```')) {
       jsonStr = jsonStr.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
     }
-    // Try to find JSON object boundaries if extra text exists
+    // Find JSON object boundaries
     const objStart = jsonStr.indexOf('{');
     const objEnd = jsonStr.lastIndexOf('}');
     if (objStart >= 0 && objEnd > objStart) {
       jsonStr = jsonStr.slice(objStart, objEnd + 1);
     }
-    // Fix common LLM JSON issues: unescaped newlines inside string values
-    // Replace literal newlines that are between quotes (brute-force approach)
-    jsonStr = jsonStr.replace(/\t/g, ' '); // tabs → space
-    // Try direct parse first
+
+    // Attempt 1: direct parse
     let parsed;
-    try {
-      parsed = JSON.parse(jsonStr);
-    } catch (e1) {
-      // If direct parse fails, try sanitizing: escape unescaped newlines in strings
-      let sanitized = '';
-      let inString = false, escaped = false;
-      for (let i = 0; i < jsonStr.length; i++) {
-        const ch = jsonStr[i];
-        if (escaped) { sanitized += ch; escaped = false; continue; }
-        if (ch === '\\') { sanitized += ch; escaped = true; continue; }
-        if (ch === '"') { inString = !inString; sanitized += ch; continue; }
-        if (inString && ch === '\n') { sanitized += '\\n'; continue; }
-        if (inString && ch === '\r') { sanitized += ''; continue; }
-        sanitized += ch;
+    try { parsed = JSON.parse(jsonStr); } catch (e1) {
+      // Attempt 2: fix trailing commas before } or ]
+      try {
+        const fixed = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+        parsed = JSON.parse(fixed);
+      } catch (e2) {
+        // Attempt 3: escape literal newlines inside string values
+        try {
+          let sanitized = '';
+          let inStr = false, esc = false;
+          for (let i = 0; i < jsonStr.length; i++) {
+            const ch = jsonStr[i];
+            if (esc) { sanitized += ch; esc = false; continue; }
+            if (ch === '\\') { sanitized += ch; esc = true; continue; }
+            if (ch === '"') { inStr = !inStr; }
+            if (inStr && ch === '\n') { sanitized += '\\n'; continue; }
+            if (inStr && ch === '\r') { continue; }
+            sanitized += ch;
+          }
+          parsed = JSON.parse(sanitized);
+        } catch (e3) {
+          console.error('All parse attempts failed. Raw:', text.slice(0, 300));
+          return null;
+        }
       }
-      parsed = JSON.parse(sanitized);
     }
 
-    // Validate structure
-    if (!parsed.scores || !parsed.feedback) return null;
+    if (!parsed || !parsed.scores || !parsed.feedback) return null;
 
-    // Validate all expected dims are present
     for (const d of dims) {
       if (typeof parsed.scores[d.key] !== 'number' || parsed.scores[d.key] < 1 || parsed.scores[d.key] > 5) {
-        parsed.scores[d.key] = 3; // default
+        parsed.scores[d.key] = 3;
       }
       if (typeof parsed.feedback[d.key] !== 'string') {
         parsed.feedback[d.key] = '—';
       }
     }
-
     return parsed;
   } catch (e) {
     console.error('Parse error:', e, text.slice(0, 200));
