@@ -1623,7 +1623,7 @@ ${answerLines}
 【参考结构框架】
 ${refLines}
 
-请严格按以下 JSON 格式返回（不要包含其他任何文字）：
+请严格按以下 JSON 格式返回（不要包含其他任何文字，所有字符串内换行请用 \\n 表示，不要使用真实换行）：
 {
   "scores": {
 ${dims.map(d => `    "${d.key}": <1-5整数>`).join(',\n')}
@@ -1632,8 +1632,8 @@ ${dims.map(d => `    "${d.key}": <1-5整数>`).join(',\n')}
 ${dims.map(d => `    "${d.key}": "<1-2句具体改进建议>"`).join(',\n')}
   },
   "overall_comment": "<总体评价，10-25字>",
-  "optimized_structure": "<将用户回答按参考框架重新组织后的结构，用条目列出要点>",
-  "optimized_sentences": "<将用户核心观点用更精炼有力的语言重写，输出2-4句可参考的优化句子>"
+  "optimized_structure": "<将用户回答按参考框架重新组织，条目间用\\n分隔>",
+  "optimized_sentences": "<用更精炼的语言重写核心观点，2-4句，句间用\\n分隔>"
 }
 
 评分标准：
@@ -1690,7 +1690,7 @@ async function triggerAiScore() {
 
     const body = {
       model: model,
-      max_tokens: 500,
+      max_tokens: 1500,
       messages: [{ role: 'user', content: buildScoringPrompt(pendingEntry, dims) }]
     };
 
@@ -1729,10 +1729,38 @@ function parseScoreResponse(text, dims) {
   try {
     // Extract JSON from response (handle markdown code blocks)
     let jsonStr = text.trim();
+    // Strip outer markdown fences
     if (jsonStr.startsWith('```')) {
       jsonStr = jsonStr.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
     }
-    const parsed = JSON.parse(jsonStr);
+    // Try to find JSON object boundaries if extra text exists
+    const objStart = jsonStr.indexOf('{');
+    const objEnd = jsonStr.lastIndexOf('}');
+    if (objStart >= 0 && objEnd > objStart) {
+      jsonStr = jsonStr.slice(objStart, objEnd + 1);
+    }
+    // Fix common LLM JSON issues: unescaped newlines inside string values
+    // Replace literal newlines that are between quotes (brute-force approach)
+    jsonStr = jsonStr.replace(/\t/g, ' '); // tabs → space
+    // Try direct parse first
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch (e1) {
+      // If direct parse fails, try sanitizing: escape unescaped newlines in strings
+      let sanitized = '';
+      let inString = false, escaped = false;
+      for (let i = 0; i < jsonStr.length; i++) {
+        const ch = jsonStr[i];
+        if (escaped) { sanitized += ch; escaped = false; continue; }
+        if (ch === '\\') { sanitized += ch; escaped = true; continue; }
+        if (ch === '"') { inString = !inString; sanitized += ch; continue; }
+        if (inString && ch === '\n') { sanitized += '\\n'; continue; }
+        if (inString && ch === '\r') { sanitized += ''; continue; }
+        sanitized += ch;
+      }
+      parsed = JSON.parse(sanitized);
+    }
 
     // Validate structure
     if (!parsed.scores || !parsed.feedback) return null;
@@ -1749,7 +1777,7 @@ function parseScoreResponse(text, dims) {
 
     return parsed;
   } catch (e) {
-    console.error('Parse error:', e, text);
+    console.error('Parse error:', e, text.slice(0, 200));
     return null;
   }
 }
@@ -2263,7 +2291,7 @@ async function scoreHistoryRecord(index) {
 
     const body = {
       model: model,
-      max_tokens: 500,
+      max_tokens: 1500,
       messages: [{ role: 'user', content: buildScoringPrompt(tempEntry, dims) }]
     };
 
