@@ -484,7 +484,10 @@ body {
     <label style="font-size:.72rem;color:var(--text-dim)">API 地址</label>
     <input type="text" id="apiurl-input" placeholder="https://api.anthropic.com" autocomplete="off">
     <label style="font-size:.72rem;color:var(--text-dim);margin-top:8px;display:block">API Key</label>
-    <input type="password" id="apikey-input" placeholder="sk-ant-api03-... 或 sk-..." autocomplete="off">
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="password" id="apikey-input" placeholder="sk-ant-api03-... 或 sk-..." autocomplete="off" style="flex:1">
+      <button type="button" id="toggle-apikey-btn" onclick="toggleApiKeyVisibility()" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:8px 10px;cursor:pointer;font-family:inherit;font-size:.8rem;white-space:nowrap">👁 显示</button>
+    </div>
     <p id="storage-info" style="font-size:.68rem;color:var(--text-dim);margin-top:12px;text-align:center"></p>
     <div class="modal-actions">
       <button class="btn-text" onclick="closeSettings()" style="text-decoration:none">取消</button>
@@ -977,6 +980,11 @@ async function doLogin() {
     localStorage.setItem('tt_user', JSON.stringify({ id: currentUser.id, nickname: currentUser.nickname }));
     localStorage.setItem('tt_saved_nickname', nickname);
     localStorage.setItem('tt_saved_code', code);
+    // Load API key from cloud if not set locally (cross-device sync)
+    if (currentUser.api_key && !localStorage.getItem('tt_apikey')) {
+      setApiKey(currentUser.api_key);
+      if (currentUser.api_url) setApiUrl(currentUser.api_url);
+    }
     updateHome();
     showScreen('home');
   } catch (e) {
@@ -1513,6 +1521,13 @@ function saveApiKey() {
     setModel('deepseek-chat');
   } else {
     setModel('claude-haiku-4-5-20251001');
+  }
+  // Sync to Supabase so API key follows your account across devices
+  if (currentUser) {
+    supabaseFetch(`users?id=eq.${currentUser.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ api_key: key, api_url: url })
+    }).catch(e => console.error('sync api key error:', e));
   }
   closeSettings();
   toast('设置已保存 ✅');

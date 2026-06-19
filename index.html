@@ -980,6 +980,11 @@ async function doLogin() {
     localStorage.setItem('tt_user', JSON.stringify({ id: currentUser.id, nickname: currentUser.nickname }));
     localStorage.setItem('tt_saved_nickname', nickname);
     localStorage.setItem('tt_saved_code', code);
+    // Load API key from cloud if not set locally (cross-device sync)
+    if (currentUser.api_key && !localStorage.getItem('tt_apikey')) {
+      setApiKey(currentUser.api_key);
+      if (currentUser.api_url) setApiUrl(currentUser.api_url);
+    }
     updateHome();
     showScreen('home');
   } catch (e) {
@@ -1516,6 +1521,13 @@ function saveApiKey() {
     setModel('deepseek-chat');
   } else {
     setModel('claude-haiku-4-5-20251001');
+  }
+  // Sync to Supabase so API key follows your account across devices
+  if (currentUser) {
+    supabaseFetch(`users?id=eq.${currentUser.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ api_key: key, api_url: url })
+    }).catch(e => console.error('sync api key error:', e));
   }
   closeSettings();
   toast('设置已保存 ✅');
