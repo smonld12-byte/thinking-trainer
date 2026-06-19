@@ -6,16 +6,32 @@
 <title>景行内部思维训练</title>
 <style>
 :root {
-  --bg: #0f0f0f;
-  --bg-card: #1a1a1a;
-  --bg-input: #222;
-  --text: #f0ebe0;
-  --text-dim: #a09888;
-  --gold: #c9a96e;
-  --gold-dim: #8a7040;
-  --border: #2a2a2a;
+  --gold: #b8942e;
+  --gold-dim: #8a6d20;
   --radius: 14px;
   --radius-sm: 10px;
+}
+/* Light (default) */
+:root {
+  --bg: #f5f2eb;
+  --bg-card: #ffffff;
+  --bg-input: #f0ece4;
+  --text: #1a1a1a;
+  --text-dim: #8a8070;
+  --border: #e0dcd4;
+  --shadow: rgba(0,0,0,.04);
+}
+/* Dark */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0f;
+    --bg-card: #1a1a1a;
+    --bg-input: #222;
+    --text: #f0ebe0;
+    --text-dim: #a09888;
+    --border: #2a2a2a;
+    --shadow: rgba(0,0,0,.2);
+  }
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; }
@@ -53,7 +69,7 @@ body {
   padding: 20px 16px; cursor: pointer; text-align: left; transition: all .2s;
   color: var(--text); font-family: inherit; font-size: inherit;
 }
-.exercise-card:active { transform: scale(.97); background: #222; border-color: var(--gold-dim); }
+.exercise-card:active { transform: scale(.97); background: var(--bg-input); border-color: var(--gold-dim); }
 .exercise-card .icon { font-size: 1.5rem; margin-bottom: 8px; display: block; }
 .exercise-card .name { font-size: .95rem; font-weight: 600; }
 .exercise-card .hint { font-size: .72rem; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
@@ -92,11 +108,11 @@ body {
   transition: border-color .2s; min-height: 60px;
 }
 .input-group textarea:focus { outline: none; border-color: var(--gold); }
-.input-group textarea::placeholder { color: #555; }
+.input-group textarea::placeholder { color: var(--text-dim); }
 
 .ex-actions { display: flex; gap: 10px; align-items: center; margin-top: 24px; }
 .btn-submit {
-  flex: 1; background: var(--gold); color: #0f0f0f; border: none; border-radius: var(--radius-sm);
+  flex: 1; background: var(--gold); color: #fff; border: none; border-radius: var(--radius-sm);
   padding: 14px; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit;
   letter-spacing: .04em; transition: all .2s;
 }
@@ -131,8 +147,8 @@ body {
 }
 .answer-block .block-label { font-size: .75rem; color: var(--text-dim); margin-bottom: 4px; font-weight: 600; }
 .answer-block .block-content { font-size: .92rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
-.answer-block .block-content:empty::after { content: '（未填写）'; color: #444; }
-.structure-ref { border-left: 4px solid var(--gold) !important; background: #1a1a15 !important; }
+.answer-block .block-content:empty::after { content: '（未填写）'; color: var(--text-dim); }
+.structure-ref { border-left: 4px solid var(--gold) !important; background: var(--bg-card) !important; }
 
 /* Progress Screen */
 .progress-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
@@ -158,7 +174,7 @@ body {
 /* Toast */
 .toast {
   position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-  background: var(--gold); color: #0f0f0f; padding: 10px 24px; border-radius: 20px;
+  background: var(--gold); color: #fff; padding: 10px 24px; border-radius: 20px;
   font-size: .85rem; font-weight: 600; z-index: 100; pointer-events: none;
   opacity: 0; transition: opacity .3s;
 }
@@ -175,11 +191,11 @@ body {
 .rating-row .dim-desc { font-size: .7rem; color: var(--text-dim); }
 .stars { display: flex; gap: 4px; }
 .star-btn {
-  background: none; border: 1px solid var(--border); color: #444;
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
   width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem;
   transition: all .15s; display: flex; align-items: center; justify-content: center;
 }
-.star-btn.active { background: var(--gold); color: #0f0f0f; border-color: var(--gold); transform: scale(1.1); }
+.star-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); transform: scale(1.1); }
 .rating-total { text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
 .rating-total .score-num { font-size: 1.8rem; font-weight: 700; color: var(--gold); }
 .rating-total .score-label { font-size: .72rem; color: var(--text-dim); }
@@ -214,7 +230,7 @@ body {
 }
 .detail-answer .da-label { font-size: .75rem; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; }
 .detail-answer .da-content { font-size: .88rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
-.detail-answer .da-content:empty::after { content: '（未填写）'; color: #444; }
+.detail-answer .da-content:empty::after { content: '（未填写）'; color: var(--text-dim); }
 .detail-feedback { font-size: .78rem; color: var(--text-dim); line-height: 1.6; margin-top: 6px; }
 .detail-none { text-align: center; color: var(--text-dim); padding: 20px 0; font-size: .82rem; }
 
@@ -225,7 +241,7 @@ body {
   padding: 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: .78rem;
   font-family: inherit; text-align: center; transition: all .2s;
 }
-.btn-data:active { background: #222; color: var(--text); }
+.btn-data:active { background: var(--bg-input); color: var(--text); }
 
 /* Settings Modal */
 .modal-overlay {
@@ -259,7 +275,7 @@ body {
 .score-card .dim-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .score-card .dim-name { font-size: .88rem; font-weight: 600; }
 .score-card .dim-score { font-size: 1.3rem; font-weight: 700; color: var(--gold); }
-.score-bar-wrap { height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+.score-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
 .score-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .6s ease; }
 .score-card .dim-feedback { font-size: .78rem; color: var(--text-dim); line-height: 1.5; }
 .ai-overall {
@@ -360,7 +376,7 @@ body {
 }
 .track-footer { text-align: center; margin-top: 10px; }
 .track-notice {
-  background: #1a1a15; border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
+  background: var(--bg-card); border: 1px solid var(--gold-dim); border-radius: var(--radius-sm);
   padding: 14px 16px; margin-top: 16px; font-size: .75rem; color: var(--text-dim);
   line-height: 1.7; text-align: left;
 }
@@ -371,7 +387,7 @@ body {
   border-radius: 10px; letter-spacing: .04em; margin-bottom: 8px;
 }
 .home-track-badge.auto { background: #1a2a1a; color: #8cb896; border: 1px solid #2a4a2a; }
-.home-track-badge.ai { background: #1a1a25; color: #7ab8d4; border: 1px solid #2a2a4a; }
+.home-track-badge.ai { background: var(--bg-card); color: #7ab8d4; border: 1px solid #2a2a4a; }
 
 /* Switch track button */
 .btn-switch-track {
@@ -407,7 +423,7 @@ body {
   border-radius: 20px; padding: 8px 16px; font-size: .78rem; color: var(--text-dim);
   cursor: pointer; font-family: inherit; white-space: nowrap; transition: all .2s;
 }
-.reading-tab.active { background: var(--gold); color: #0f0f0f; border-color: var(--gold); font-weight: 600; }
+.reading-tab.active { background: var(--gold); color: #fff; border-color: var(--gold); font-weight: 600; }
 .reading-tab:active { transform: scale(.95); }
 .reading-card {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
@@ -430,8 +446,8 @@ body {
   border-radius: var(--radius-sm); padding: 12px 8px; font-size: .8rem; color: var(--text-dim);
   cursor: pointer; font-family: inherit; text-align: center; transition: all .2s;
 }
-.reading-btn:active { background: #222; color: var(--text); }
-.reading-btn.primary { background: var(--gold); color: #0f0f0f; border-color: var(--gold); font-weight: 600; }
+.reading-btn:active { background: var(--bg-input); color: var(--text); }
+.reading-btn.primary { background: var(--gold); color: #fff; border-color: var(--gold); font-weight: 600; }
 .reading-btn.fav-active { border-color: var(--gold); color: var(--gold); }
 
 /* Favorites list */
@@ -439,7 +455,7 @@ body {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 16px; margin-bottom: 10px; cursor: pointer; transition: all .2s;
 }
-.fav-item:active { background: #222; }
+.fav-item:active { background: var(--bg-input); }
 .fav-item .fav-title { font-size: .88rem; font-weight: 600; color: var(--gold); }
 .fav-item .fav-preview { font-size: .78rem; color: var(--text-dim); margin-top: 4px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .fav-item .fav-meta { font-size: .68rem; color: var(--text-dim); margin-top: 6px; }
@@ -3684,7 +3700,6 @@ function renderReadingContent() {
   const cat = READING_CATEGORIES.find(x => x.key === readingState.category);
   document.getElementById('reading-content').innerHTML = `
     <div class="reading-card">
-      ${(c.imageUrl || c.imageQuery) ? `<img src="${c.imageUrl || 'https://loremflickr.com/800/400/' + encodeURIComponent(c.imageQuery || 'design') + '?random=' + Date.now()}" alt="" class="reading-img" onerror="this.style.display='none'" loading="lazy">` : ''}
       <div class="rc-title">${cat ? cat.icon + ' ' : ''}${c.title || ''}</div>
       <div class="rc-body">${(c.content || '').replace(/\n/g, '<br>')}</div>
       ${c.takeaway ? `<div class="rc-takeaway">${c.takeaway}</div>` : ''}
