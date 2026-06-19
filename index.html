@@ -1806,7 +1806,14 @@ async function startExercise(type, forceItemId) {
   timerOn = false;
   $('btn-timer').textContent = '⏱';
   $('btn-timer').classList.remove('on');
-  $('timer-display').textContent = '';
+
+  // Suggested time for narrative modes vs quick modes
+  const quickModes = ['pyramid', 'multiAngle', 'prep'];
+  const isQuick = quickModes.includes(type);
+  $('timer-display').textContent = isQuick ? '建议用时 1-2 分钟' : '建议用时 3-5 分钟，展开叙述';
+
+  // Auto-start timer
+  setTimeout(() => startTimer(), 500);
 
   // Show event context for essence mode
   const ctxDiv = $('ex-event-context');
@@ -3212,16 +3219,29 @@ async function scoreHistoryRecord(index) {
 }
 
 // ======== TIMER ========
-function toggleTimer() {
-  if (timerOn) { stopTimer(); return; }
+function startTimer() {
+  if (timerOn) return;
   timerOn = true;
   $('btn-timer').classList.add('on');
-  $('btn-timer').textContent = formatTime(timerSeconds);
-  $('timer-display').textContent = '计时中…';
+  $('btn-timer').textContent = '⏸ ' + formatTime(timerSeconds);
+  $('timer-display').textContent = '';
   timerInterval = setInterval(() => {
     timerSeconds++;
-    $('btn-timer').textContent = formatTime(timerSeconds);
+    $('btn-timer').textContent = '⏸ ' + formatTime(timerSeconds);
   }, 1000);
+}
+
+function toggleTimer() {
+  if (timerOn) { pauseTimer(); return; }
+  startTimer();
+}
+
+function pauseTimer() {
+  timerOn = false;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  $('btn-timer').classList.remove('on');
+  $('btn-timer').textContent = '▶ ' + formatTime(timerSeconds);
+  $('timer-display').textContent = '已暂停';
 }
 
 function stopTimer() {
