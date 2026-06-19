@@ -420,6 +420,10 @@ body {
   font-size: .85rem; color: var(--gold); line-height: 1.7; font-style: italic;
 }
 .reading-card .rc-takeaway::before { content: '💡 核心收获：'; font-style: normal; font-weight: 600; font-size: .75rem; display: block; margin-bottom: 4px; color: var(--text-dim); }
+.reading-img {
+  width: 100%; border-radius: var(--radius-sm); margin-bottom: 16px;
+  max-height: 240px; object-fit: cover; background: var(--bg-input);
+}
 .reading-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
 .reading-btn {
   flex: 1; min-width: 80px; background: var(--bg-card); border: 1px solid var(--border);
@@ -3562,6 +3566,7 @@ function buildReadingPrompt(category) {
 {
   "title": "<案例名称，有吸引力>",
   "content": "<深度拆解：这个案例的背景是什么？设计师是谁？核心设计决策有哪些？每个决策背后的逻辑是什么？这个案例对当代设计的启发是什么？写3-5段，每段聚焦一个要点>",
+  "imageQuery": "<1-3个英文关键词用于搜索配图，如 'modern architecture interior'>",
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<建议关联的训练模式：needInsight/essence/pyramid/multiAngle/prep/connection/scenario>"
 }
@@ -3575,6 +3580,10 @@ function buildReadingPrompt(category) {
 {
   "title": "<金句原文，加引号>",
   "content": "<这句话是谁说的/从哪来的？背后的设计哲学是什么？在实际设计中怎么用？举一个具体的设计场景说明这句话的含义。写3-5段>",
+  "imageQuery": "<1-2个英文关键词，如 'design studio workshop'>",
+  "imageQuery": "<1-2个英文关键词，如 'entrance foyer design'>",
+  "imageQuery": "<1-2个英文关键词，如 'framed view window'>",
+  "imageQuery": "<1-2个英文关键词，如 'fallingwater interior'>",
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<建议关联的训练模式>"
 }
@@ -3627,6 +3636,7 @@ function buildReadingPrompt(category) {
 {
   "title": "<标题>",
   "content": "<内容，3-5段，有深度>",
+  "imageQuery": "<1-2个英文关键词>",
   "takeaway": "<一句话核心收获，15-30字>",
   "relatedTraining": "<needInsight/essence/pyramid/multiAngle/prep/connection/scenario 之一>"
 }
@@ -3660,6 +3670,7 @@ function renderReadingContent() {
   const cat = READING_CATEGORIES.find(x => x.key === readingState.category);
   document.getElementById('reading-content').innerHTML = `
     <div class="reading-card">
+      ${c.imageQuery ? `<img src="https://source.unsplash.com/featured/?${encodeURIComponent(c.imageQuery)}&w=800&h=400&fit=crop" alt="" class="reading-img" onerror="this.style.display='none'" loading="lazy">` : ''}
       <div class="rc-title">${cat ? cat.icon + ' ' : ''}${c.title || ''}</div>
       <div class="rc-body">${(c.content || '').replace(/\n/g, '<br>')}</div>
       ${c.takeaway ? `<div class="rc-takeaway">${c.takeaway}</div>` : ''}
@@ -3693,6 +3704,7 @@ function toggleFavorite() {
       title: c.title,
       content: c.content,
       takeaway: c.takeaway,
+      imageQuery: c.imageQuery || '',
       category: c.category,
       ts: c.ts
     });
