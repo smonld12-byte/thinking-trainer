@@ -318,7 +318,7 @@ body {
   <div style="max-width:320px;margin:0 auto;padding:0 16px">
     <div class="input-group">
       <div class="field-label">昵称</div>
-      <input type="text" id="login-nickname" placeholder="你的名字" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:.9rem;padding:12px">
+      <input type="text" id="login-nickname" placeholder="你的名字" oninput="localStorage.setItem('tt_saved_nickname', this.value.trim())" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:.9rem;padding:12px">
     </div>
     <div class="input-group">
       <div class="field-label">访问口令</div>
@@ -404,7 +404,7 @@ body {
     <button class="btn-submit" id="btn-skip-rating" onclick="skipRating()">跳过评分，再来一题</button>
   </div>
   <div style="text-align:center;margin-top:16px">
-    <button class="btn-text" onclick="showScreen('home')">← 返回首页</button>
+    <button class="btn-text" onclick="goHomeFromReview()">← 返回首页</button>
   </div>
 </section>
 
@@ -484,7 +484,10 @@ body {
     <label style="font-size:.72rem;color:var(--text-dim)">API 地址</label>
     <input type="text" id="apiurl-input" placeholder="https://api.anthropic.com" autocomplete="off">
     <label style="font-size:.72rem;color:var(--text-dim);margin-top:8px;display:block">API Key</label>
-    <input type="password" id="apikey-input" placeholder="sk-ant-api03-... 或 sk-..." autocomplete="off">
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="password" id="apikey-input" placeholder="sk-ant-api03-... 或 sk-..." autocomplete="off" style="flex:1">
+      <button type="button" id="toggle-apikey-btn" onclick="toggleApiKeyVisibility()" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:8px 10px;cursor:pointer;font-family:inherit;font-size:.8rem;white-space:nowrap">👁 显示</button>
+    </div>
     <p id="storage-info" style="font-size:.68rem;color:var(--text-dim);margin-top:12px;text-align:center"></p>
     <div class="modal-actions">
       <button class="btn-text" onclick="closeSettings()" style="text-decoration:none">取消</button>
@@ -882,7 +885,7 @@ async function getHistory() {
 }
 
 async function saveHistory(entry) {
-  if (!currentUser) return;
+  if (!currentUser) return false;
   try {
     const row = {
       user_id: currentUser.id,
@@ -908,8 +911,10 @@ async function saveHistory(entry) {
       method: 'PATCH',
       body: JSON.stringify({ last_active: new Date().toISOString() })
     });
+    return true;
   } catch (e) {
     console.error('saveHistory error:', e);
+    return false;
   }
 }
 
@@ -971,8 +976,10 @@ async function doLogin() {
       currentUser = created[0] || created;
     }
 
-    // Store session
+    // Store session + remember credentials
     localStorage.setItem('tt_user', JSON.stringify({ id: currentUser.id, nickname: currentUser.nickname }));
+    localStorage.setItem('tt_saved_nickname', nickname);
+    localStorage.setItem('tt_saved_code', code);
     updateHome();
     showScreen('home');
   } catch (e) {
@@ -1090,6 +1097,13 @@ function showScreen(name) {
   }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(name).classList.add('active');
+  if (name === 'login') {
+    // Pre-fill saved credentials when login screen shows
+    const savedNick = localStorage.getItem('tt_saved_nickname');
+    const savedCode = localStorage.getItem('tt_saved_code');
+    if (savedNick && !$('login-nickname').value) $('login-nickname').value = savedNick;
+    if (savedCode && !$('login-code').value) $('login-code').value = savedCode;
+  }
   if (name === 'home') updateHome();
   if (name === 'progress') { updateProgress(); setTimeout(() => { drawGrowthChart(); drawRadarChart(); }, 100); }
   if (name === 'ranking') loadRanking('total');
@@ -1347,8 +1361,24 @@ function showReview(answers, timeSpent) {
 }
 
 async function skipRating() {
-  if (pendingEntry) { await saveHistory(pendingEntry); pendingEntry = null; }
+  if (pendingEntry) {
+    const ok = await saveHistory(pendingEntry);
+    if (!ok) {
+      toast('保存失败，请检查网络后重试');
+      return;
+    }
+    pendingEntry = null;
+    toast('记录已保存 ✅');
+  }
   nextExercise();
+}
+
+async function goHomeFromReview() {
+  if (pendingEntry) {
+    await saveHistory(pendingEntry);
+    pendingEntry = null;
+  }
+  showScreen('home');
 }
 function nextExercise() { startExercise(currentType); }
 
@@ -2082,6 +2112,139 @@ function getUserFieldLabel(key) {
   return key;
 }
 
+// Helper: look up item structure from TOPICS data
+function getItemStructure(type, itemId) {
+  const data = TOPICS[type];
+  if (!data) return null;
+  const item = data.items.find(it => it.id === itemId);
+  return item ? item.structure : null;
+}
+
+// Update an existing training record in Supabase
+async function updateHistoryRecord(recordId, updates) {
+  try {
+    await supabaseFetch(`training_records?id=eq.${recordId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
+    });
+    return true;
+  } catch (e) {
+    console.error('updateHistoryRecord error:', e);
+    return false;
+  }
+}
+
+// Retroactively score a historical record with AI
+async function scoreHistoryRecord(index) {
+  const history = await getHistory();
+  const h = history[index];
+  if (!h) return;
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    toast('请先设置 API Key');
+    showSettings();
+    return;
+  }
+
+  // Look up reference structure from TOPICS
+  const struct = getItemStructure(h.type, h.itemId);
+  if (!struct) {
+    toast('该题目已不存在，无法评分');
+    return;
+  }
+
+  // Show loading in detail content
+  const dc = $('detail-content');
+  const existingHtml = dc.innerHTML;
+  dc.innerHTML = existingHtml.replace(
+    /(<div class="ex-actions".*?>)/s,
+    '$1<div class="loading-wrap" style="margin-bottom:12px"><div class="loading-dots"><span></span><span></span><span></span></div><div class="loading-text">AI 正在评分…</div></div>'
+  );
+
+  const dims = getDims(h.type);
+  const apiUrl = getApiUrl();
+  const model = getModel();
+  const isDeepSeek = apiUrl.includes('deepseek');
+
+  try {
+    // Build a temporary entry with structure for the scoring prompt
+    const tempEntry = { ...h, _item: { structure: struct } };
+    const endpoint = isDeepSeek
+      ? `${apiUrl}/v1/messages`
+      : `${apiUrl}/v1/messages`;
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey
+    };
+    if (!isDeepSeek) {
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    }
+
+    const body = {
+      model: model,
+      max_tokens: 500,
+      messages: [{ role: 'user', content: buildScoringPrompt(tempEntry, dims) }]
+    };
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      let errMsg = `API 请求失败 (${response.status})`;
+      if (response.status === 401) errMsg = 'API Key 无效，请检查设置';
+      else if (response.status === 429) errMsg = '请求太频繁，请稍等再试';
+      else if (response.status === 403) errMsg = 'API Key 没有权限，请检查 Key 或账户余额';
+      dc.innerHTML = existingHtml;
+      toast(errMsg);
+      return;
+    }
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const result = parseScoreResponse(text, dims);
+
+    if (!result) {
+      dc.innerHTML = existingHtml;
+      toast('AI 返回格式异常，请重试');
+      return;
+    }
+
+    // Build score entries
+    const entryScores = {};
+    dims.forEach(d => { entryScores[d.key] = result.scores[d.key] || 3; });
+    const avg = parseFloat((dims.reduce((s, d) => s + (result.scores[d.key] || 3), 0) / dims.length).toFixed(1));
+
+    // Update Supabase record
+    const ok = await updateHistoryRecord(h._id, {
+      scores: entryScores,
+      total_score: avg,
+      score_source: 'ai',
+      ai_feedback: result.feedback,
+      ai_comment: result.overall_comment || ''
+    });
+
+    if (!ok) {
+      dc.innerHTML = existingHtml;
+      toast('保存评分失败，请检查网络后重试');
+      return;
+    }
+
+    toast('AI 评分已保存 ✅');
+    // Refresh detail view
+    showDetail(index);
+  } catch (err) {
+    dc.innerHTML = existingHtml;
+    toast(err.message === 'Failed to fetch' ? '网络连接失败，请检查网络后重试' : err.message);
+  }
+}
+
 // ======== TIMER ========
 function toggleTimer() {
   if (timerOn) { stopTimer(); return; }
@@ -2242,9 +2405,18 @@ async function showDetail(index) {
     html += '<div class="detail-block"><h3>参考结构</h3><div class="detail-none">旧记录未保存参考结构，完成新练习后可见</div></div>';
   }
 
+  // AI score button (only for records without AI scores)
+  if (!h.scoreSource || h.scoreSource !== 'ai') {
+    html += `
+    <div class="ex-actions" style="margin-top:20px">
+      <button class="btn-submit" onclick="scoreHistoryRecord(${index})" style="background:var(--gold-dim)">🤖 AI 评分</button>
+    </div>`;
+    html += '<div style="text-align:center;font-size:.72rem;color:var(--text-dim);margin-top:6px">添加 API Key 后可为旧记录补评分</div>';
+  }
+
   // Retrain button
   html += `
-  <div class="ex-actions" style="margin-top:20px">
+  <div class="ex-actions" style="margin-top:${(!h.scoreSource || h.scoreSource !== 'ai') ? '8px' : '20px'}">
     <button class="btn-submit" onclick="startExercise('${h.type}', '${h.itemId || ''}')">🔄 重新训练此题</button>
   </div>`;
 
@@ -2285,6 +2457,11 @@ function toast(msg) {
     updateHome();
     showScreen('home');
   } else {
+    // Pre-fill saved credentials
+    const savedNick = localStorage.getItem('tt_saved_nickname');
+    const savedCode = localStorage.getItem('tt_saved_code');
+    if (savedNick) $('login-nickname').value = savedNick;
+    if (savedCode) $('login-code').value = savedCode;
     showScreen('login');
   }
 })();
