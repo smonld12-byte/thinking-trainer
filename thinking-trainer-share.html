@@ -270,6 +270,16 @@ body {
 .ai-overall .overall-label { font-size: .75rem; color: var(--text-dim); }
 .ai-overall .overall-comment { font-size: .82rem; color: var(--text); margin-top: 8px; font-style: italic; }
 
+/* AI Optimize Section */
+.ai-optimize-section { margin-top: 16px; }
+.ai-optimize-title { font-size: .82rem; color: var(--gold); font-weight: 600; margin-bottom: 10px; }
+.ai-optimize-block {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px; margin-bottom: 10px; border-left: 3px solid var(--gold-dim);
+}
+.ao-label { font-size: .75rem; color: var(--gold-dim); font-weight: 600; margin-bottom: 8px; }
+.ao-content { font-size: .85rem; color: var(--text); line-height: 1.8; white-space: normal; word-break: break-word; }
+
 /* Loading */
 .loading-wrap { text-align: center; padding: 30px 0; }
 .loading-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
@@ -875,6 +885,8 @@ async function getHistory() {
       scoreSource: r.score_source,
       aiFeedback: r.ai_feedback,
       aiComment: r.ai_comment,
+      optimizedStructure: r.optimized_structure || '',
+      optimizedSentences: r.optimized_sentences || '',
       timeSpent: r.time_spent,
       ts: new Date(r.created_at).getTime(),
       _id: r.id  // Supabase row id
@@ -900,6 +912,8 @@ async function saveHistory(entry) {
       score_source: entry.scoreSource || null,
       ai_feedback: entry.aiFeedback || null,
       ai_comment: entry.aiComment || null,
+      optimized_structure: entry.optimizedStructure || null,
+      optimized_sentences: entry.optimizedSentences || null,
       time_spent: entry.timeSpent || 0,
       created_at: new Date().toISOString()
     };
@@ -1585,7 +1599,9 @@ ${dims.map(d => `    "${d.key}": <1-5整数>`).join(',\n')}
   "feedback": {
 ${dims.map(d => `    "${d.key}": "<1-2句具体改进建议>"`).join(',\n')}
   },
-  "overall_comment": "<总体评价，10-25字>"
+  "overall_comment": "<总体评价，10-25字>",
+  "optimized_structure": "<将用户回答按参考框架重新组织后的结构，用条目列出要点>",
+  "optimized_sentences": "<将用户核心观点用更精炼有力的语言重写，输出2-4句可参考的优化句子>"
 }
 
 评分标准：
@@ -1738,12 +1754,27 @@ function displayAiScores(result, dims) {
     <div class="overall-comment">"${comment}"</div>
   </div>`;
 
+  // Optimized structure & sentences
+  const optStruct = result.optimized_structure || '';
+  const optSentences = result.optimized_sentences || '';
+  if (optStruct || optSentences) {
+    html += '<div class="ai-optimize-section">';
+    html += '<div class="ai-optimize-title">✨ AI 优化建议</div>';
+    if (optStruct) {
+      html += `<div class="ai-optimize-block"><div class="ao-label">📋 优化后的思路结构</div><div class="ao-content">${optStruct.replace(/\n/g, '<br>')}</div></div>`;
+    }
+    if (optSentences) {
+      html += `<div class="ai-optimize-block"><div class="ao-label">✍️ 优化后的参考句子</div><div class="ao-content">${optSentences.replace(/\n/g, '<br>')}</div></div>`;
+    }
+    html += '</div>';
+  }
+
   $('ai-score-area').innerHTML = html;
   $('btn-save-and-next').style.display = 'block';
   $('btn-skip-rating').style.display = 'none';
 
   // Store results for saving
-  window._aiResult = { scores, feedback, comment, avg, dims };
+  window._aiResult = { scores, feedback, comment, avg, dims, optimized_structure: optStruct, optimized_sentences: optSentences };
 }
 
 function showAiError(msg) {
@@ -1769,6 +1800,8 @@ async function saveAndNext() {
     pendingEntry.scoreSource = 'ai';
     pendingEntry.aiFeedback = aiResult.feedback;
     pendingEntry.aiComment = aiResult.overall_comment;
+    pendingEntry.optimizedStructure = aiResult.optimized_structure || '';
+    pendingEntry.optimizedSentences = aiResult.optimized_sentences || '';
     await saveHistory(pendingEntry);
     pendingEntry = null;
     window._aiResult = null;
@@ -2240,7 +2273,9 @@ async function scoreHistoryRecord(index) {
       total_score: avg,
       score_source: 'ai',
       ai_feedback: result.feedback,
-      ai_comment: result.overall_comment || ''
+      ai_comment: result.overall_comment || '',
+      optimized_structure: result.optimized_structure || null,
+      optimized_sentences: result.optimized_sentences || null
     });
 
     if (!ok) {
@@ -2384,6 +2419,18 @@ async function showDetail(index) {
     });
     if (h.aiComment) {
       html += `<div class="ai-overall"><div class="overall-comment">"${h.aiComment}"</div></div>`;
+    }
+    html += '</div>';
+  }
+
+  // AI optimized structure & sentences
+  if (h.optimizedStructure || h.optimizedSentences) {
+    html += '<div class="detail-block"><h3>✨ AI 优化建议</h3>';
+    if (h.optimizedStructure) {
+      html += `<div class="ai-optimize-block"><div class="ao-label">📋 优化后的思路结构</div><div class="ao-content">${h.optimizedStructure.replace(/\n/g, '<br>')}</div></div>`;
+    }
+    if (h.optimizedSentences) {
+      html += `<div class="ai-optimize-block"><div class="ao-label">✍️ 优化后的参考句子</div><div class="ao-content">${h.optimizedSentences.replace(/\n/g, '<br>')}</div></div>`;
     }
     html += '</div>';
   }
