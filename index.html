@@ -380,6 +380,19 @@ body {
   border-radius: 12px; transition: all .2s;
 }
 .btn-switch-track:hover { color: var(--text); border-color: var(--gold-dim); }
+
+/* Event Context */
+.event-context-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px; border-left: 3px solid #7ab8d4;
+}
+.event-context-card .ctx-label { font-size: .72rem; color: #7ab8d4; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+.event-context-card .ctx-text { font-size: .88rem; font-weight: 400; line-height: 1.8; }
+.hint-tag {
+  display: inline-block; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 4px 10px; margin: 4px 4px 0 0;
+  font-size: .72rem; color: #7ab8d4;
+}
 </style>
 </head>
 <body>
@@ -467,6 +480,13 @@ body {
   <div class="topic-card">
     <div class="label">题目</div>
     <div class="question" id="ex-topic"></div>
+  </div>
+  <div id="ex-event-context" style="display:none">
+    <div class="topic-card" style="border-left-color:#7ab8d4">
+      <div class="label" style="color:#7ab8d4">📖 事件背景</div>
+      <div class="question" style="font-size:.88rem;font-weight:400;line-height:1.8;white-space:pre-wrap" id="ex-event-text"></div>
+    </div>
+    <div id="ex-research-hints" style="margin-bottom:16px"></div>
   </div>
   <div id="ex-inputs"></div>
   <div class="ex-actions">
@@ -1672,6 +1692,24 @@ async function startExercise(type, forceItemId) {
   $('btn-timer').classList.remove('on');
   $('timer-display').textContent = '';
 
+  // Show event context for essence mode
+  const ctxDiv = $('ex-event-context');
+  const hintsDiv = $('ex-research-hints');
+  if (type === 'essence' && currentItem.eventContext) {
+    ctxDiv.style.display = '';
+    $('ex-event-text').textContent = currentItem.eventContext;
+    // Research hints
+    const hints = currentItem.researchHints || [];
+    if (hints.length > 0) {
+      hintsDiv.innerHTML = '<div style="font-size:.75rem;color:var(--text-dim);margin-top:8px">💡 思考方向提示：' + hints.map(h => `<span class="hint-tag">${h}</span>`).join('') + '</div>';
+    } else {
+      hintsDiv.innerHTML = '';
+    }
+  } else {
+    ctxDiv.style.display = 'none';
+    hintsDiv.innerHTML = '';
+  }
+
   buildInputs(type, currentItem);
   showScreen('exercise');
 }
@@ -2092,12 +2130,28 @@ function buildTopicPrompt(type) {
 场景要求真实感强，表面和深层有明显反差。用中文，直接返回JSON。`;
   }
   if (type === 'essence') {
-    return base + `从你知道的真实历史事件、商业案例或社会现象中，选一个适合"透过现象看本质"训练的：
+    return base + `从你知道的真实历史事件、商业案例或社会现象中，选一个适合"透过现象看本质"训练的。
+
+你需要提供足够的事件背景信息，让一个不了解这个事件的人也能做出分析。
+
+请返回以下JSON格式：
 {
-  "topic": "<事件简要描述>",
-  "structure": { "phenomenon": "<表面现象>", "essence": "<本质/底层规律>", "thinkingPath": "<从表面到本质的思考路径>" }
+  "topic": "<事件标题，一句话概括>",
+  "eventContext": "<事件背景：什么时候、在哪里、谁、发生了什么、关键转折点是什么。写2-3段，足够详细让用户能基于事实做分析。>",
+  "researchHints": ["<建议的思考方向1>", "<建议的思考方向2>"],
+  "structure": {
+    "phenomenon": "<表面现象：大多数人第一眼看到的是什么>",
+    "essence": "<本质/底层规律：剥开表象后真正的规律>",
+    "thinkingPath": "<从表面到本质的思考路径：你是怎么一层层穿透的>"
+  }
 }
-要求：事件必须是真实发生过的（注明大致时间），本质洞察有深度。用中文，直接返回JSON。`;
+
+要求：
+- 事件必须真实发生过的，标注大致时间
+- eventContext要写清楚来龙去脉，让不了解的人也能看懂
+- researchHints给2个思考方向提示，帮助用户找到分析角度
+- 本质洞察要有深度，不要停留在表面
+用中文，直接返回JSON。`;
   }
   return '';
 }
@@ -2176,6 +2230,8 @@ async function generateAiTopic(type) {
     // Copy extra fields
     if (parsed.keywords) item.keywords = parsed.keywords;
     if (parsed.dims) item.dims = parsed.dims;
+    if (parsed.eventContext) item.eventContext = parsed.eventContext;
+    if (parsed.researchHints) item.researchHints = parsed.researchHints;
 
     return item;
   } catch (e) {
