@@ -393,6 +393,65 @@ body {
   border-radius: 12px; padding: 4px 10px; margin: 4px 4px 0 0;
   font-size: .72rem; color: #7ab8d4;
 }
+
+/* Reading Room */
+.reading-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.reading-header .reading-title { font-size: 1rem; font-weight: 600; }
+.reading-tabs {
+  display: flex; gap: 6px; overflow-x: auto; padding: 10px 0 16px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.reading-tabs::-webkit-scrollbar { display: none; }
+.reading-tab {
+  flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 8px 16px; font-size: .78rem; color: var(--text-dim);
+  cursor: pointer; font-family: inherit; white-space: nowrap; transition: all .2s;
+}
+.reading-tab.active { background: var(--gold); color: #0f0f0f; border-color: var(--gold); font-weight: 600; }
+.reading-tab:active { transform: scale(.95); }
+.reading-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px 20px; margin-bottom: 16px; min-height: 200px;
+}
+.reading-card .rc-title { font-size: 1.15rem; font-weight: 700; line-height: 1.5; margin-bottom: 16px; color: var(--gold); }
+.reading-card .rc-body { font-size: .92rem; line-height: 1.9; color: var(--text); white-space: pre-wrap; }
+.reading-card .rc-takeaway {
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);
+  font-size: .85rem; color: var(--gold); line-height: 1.7; font-style: italic;
+}
+.reading-card .rc-takeaway::before { content: '💡 核心收获：'; font-style: normal; font-weight: 600; font-size: .75rem; display: block; margin-bottom: 4px; color: var(--text-dim); }
+.reading-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.reading-btn {
+  flex: 1; min-width: 80px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 8px; font-size: .8rem; color: var(--text-dim);
+  cursor: pointer; font-family: inherit; text-align: center; transition: all .2s;
+}
+.reading-btn:active { background: #222; color: var(--text); }
+.reading-btn.primary { background: var(--gold); color: #0f0f0f; border-color: var(--gold); font-weight: 600; }
+.reading-btn.fav-active { border-color: var(--gold); color: var(--gold); }
+
+/* Favorites list */
+.fav-item {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 16px; margin-bottom: 10px; cursor: pointer; transition: all .2s;
+}
+.fav-item:active { background: #222; }
+.fav-item .fav-title { font-size: .88rem; font-weight: 600; color: var(--gold); }
+.fav-item .fav-preview { font-size: .78rem; color: var(--text-dim); margin-top: 4px; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.fav-item .fav-meta { font-size: .68rem; color: var(--text-dim); margin-top: 6px; }
+
+/* Reading room card on home */
+.home-reading-card {
+  background: linear-gradient(135deg, #1a1a20 0%, #1a1a18 100%);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; margin: 12px 0; cursor: pointer; text-align: left; transition: all .25s;
+  color: var(--text); font-family: inherit; font-size: inherit; width: 100%;
+}
+.home-reading-card:active { transform: scale(.98); }
+.home-reading-card:hover { border-color: var(--gold-dim); }
+.home-reading-card .hrc-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+.home-reading-card .hrc-name { font-size: 1rem; font-weight: 700; }
+.home-reading-card .hrc-desc { font-size: .75rem; color: var(--text-dim); margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -462,6 +521,7 @@ body {
     <div class="streak-badge"><span class="fire">🔥</span> 连续 <strong id="streak-count">0</strong> 天</div>
   </div>
   <div class="exercise-grid" id="exercise-grid"></div>
+  <div id="home-reading-card"></div>
   <div class="home-footer">
     <div id="queue-status" style="font-size:.68rem;color:var(--text-dim);margin-bottom:8px"></div>
     <button class="btn-text" onclick="showScreen('progress')">📊 训练统计</button>
@@ -589,6 +649,34 @@ body {
     <button class="btn-data" onclick="loadRanking('avg')" id="rank-btn-avg">综合均分</button>
   </div>
   <div id="ranking-list"></div>
+</section>
+
+<!-- Reading Room Screen -->
+<section id="reading-room" class="screen">
+  <div class="reading-header">
+    <button class="btn-back" onclick="showScreen('home')">←</button>
+    <span class="reading-title">📖 AI 设计阅览室</span>
+  </div>
+  <div class="reading-tabs" id="reading-tabs"></div>
+  <div id="reading-content">
+    <div style="text-align:center;padding:40px 0;color:var(--text-dim)">
+      选择一个分类，AI 为你精选设计内容
+    </div>
+  </div>
+  <div class="reading-actions" id="reading-actions" style="display:none">
+    <button class="reading-btn" onclick="refreshReading()">🔄 换一条</button>
+    <button class="reading-btn" id="reading-fav-btn" onclick="toggleFavorite()">⭐ 收藏</button>
+    <button class="reading-btn" id="reading-train-btn" onclick="linkToTraining()">🧠 关联训练</button>
+  </div>
+</section>
+
+<!-- Reading Favorites Screen -->
+<section id="reading-fav" class="screen">
+  <div class="detail-header">
+    <button class="btn-back" onclick="showScreen('reading-room')">←</button>
+    <span style="font-weight:600">⭐ 我的收藏</span>
+  </div>
+  <div id="reading-fav-list"></div>
 </section>
 
 </div>
@@ -1561,6 +1649,29 @@ async function updateHome() {
 
   // Periodic update check (7 days) — only for autonomous track
   if (!isAI) checkQuestionBankAge();
+
+  // Reading room card
+  const readingCard = document.getElementById('home-reading-card');
+  if (readingCard) {
+    readingCard.innerHTML = `
+    <button class="home-reading-card" onclick="openReadingRoom()">
+      <span class="hrc-icon">📖</span>
+      <span class="hrc-name">AI 设计阅览室</span>
+      <span class="hrc-desc">${isAI ? '经典案例 · 设计金句 · 风水一得 · 手法解析 · 建筑巡礼' : '需要 AI 驱动，请切换到 AI 赛道使用'}</span>
+    </button>`;
+    readingCard.querySelector('button').onclick = () => {
+      if (!isAI) {
+        toast('阅览室需要 AI 驱动，请切换到 AI 赛道');
+        return;
+      }
+      if (!getApiKey()) {
+        toast('请先设置 API Key');
+        showSettings();
+        return;
+      }
+      openReadingRoom();
+    };
+  }
 }
 
 // ======== QUESTION BANK UPDATE REMINDER ========
@@ -3349,6 +3460,305 @@ function toast(msg) {
   clearTimeout(el._timeout);
   el._timeout = setTimeout(() => el.classList.remove('show'), 2000);
 }
+
+// ======== READING ROOM ========
+const READING_CATEGORIES = [
+  { key: 'case', icon: '🏛️', label: '案例拆解', desc: '一个经典设计案例，深度拆解好在哪' },
+  { key: 'quote', icon: '💬', label: '设计金句', desc: '一句设计语录+背后的故事+怎么用' },
+  { key: 'fengshui', icon: '🎋', label: '风水一得', desc: '一个风水知识点，落地到具体设计' },
+  { key: 'technique', icon: '🔧', label: '手法解析', desc: '一个设计手法的拆解（借景/对景/框景等）' },
+  { key: 'architecture', icon: '🏗️', label: '建筑巡礼', desc: '一座值得看的建筑，好在哪' },
+  { key: 'random', icon: '🎲', label: '随机推送', desc: 'AI从以上分类中随机推送一条' },
+];
+let readingState = { category: null, content: null, loading: false };
+
+function openReadingRoom() {
+  // Build tabs
+  const tabs = document.getElementById('reading-tabs');
+  tabs.innerHTML = READING_CATEGORIES.map(c =>
+    `<button class="reading-tab${readingState.category === c.key ? ' active' : ''}" onclick="selectReadingCategory('${c.key}')">${c.icon} ${c.label}</button>`
+  ).join('');
+
+  // If no category selected yet, show prompt
+  if (!readingState.category) {
+    document.getElementById('reading-content').innerHTML =
+      '<div style="text-align:center;padding:40px 20px;color:var(--text-dim)"><div style="font-size:2rem;margin-bottom:12px">📖</div>选择一个分类，AI 为你精选设计内容<br><span style="font-size:.75rem;margin-top:8px;display:block">每个分类每次生成不同内容</span></div>';
+    document.getElementById('reading-actions').style.display = 'none';
+  }
+
+  showScreen('reading-room');
+}
+
+async function selectReadingCategory(category) {
+  readingState.category = category;
+  readingState.content = null;
+
+  // Update tab active state
+  document.querySelectorAll('.reading-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.includes(READING_CATEGORIES.find(c => c.key === category)?.label || ''));
+  });
+
+  // Show loading
+  document.getElementById('reading-content').innerHTML =
+    '<div class="loading-wrap"><div class="loading-dots"><span></span><span></span><span></span></div><div class="loading-text">AI 正在为你精选内容…</div></div>';
+  document.getElementById('reading-actions').style.display = 'none';
+
+  await loadReadingContent(category);
+}
+
+async function loadReadingContent(category) {
+  if (readingState.loading) return;
+  readingState.loading = true;
+
+  try {
+    const prompt = buildReadingPrompt(category);
+    const apiKey = getApiKey();
+    const apiUrl = getApiUrl();
+    const model = getModel();
+    const isDeepSeek = apiUrl.includes('deepseek');
+
+    const endpoint = isDeepSeek ? `${apiUrl}/v1/messages` : `${apiUrl}/v1/messages`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey
+    };
+    if (!isDeepSeek) {
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    }
+
+    const body = {
+      model: model,
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }]
+    };
+
+    const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error(`API ${response.status}`);
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const parsed = parseReadingResponse(text);
+
+    if (!parsed) throw new Error('Parse error');
+
+    readingState.content = { ...parsed, category, ts: Date.now() };
+    renderReadingContent();
+  } catch (e) {
+    document.getElementById('reading-content').innerHTML =
+      `<div class="ai-error"><div class="err-msg">⚠️ 加载失败：${e.message}</div><span class="err-retry" onclick="selectReadingCategory('${category}')">重试</span></div>`;
+  }
+  readingState.loading = false;
+}
+
+function buildReadingPrompt(category) {
+  const base = '你是一位资深设计教育家，拥有20年设计行业经验，精通室内设计、建筑设计、风水、设计史。';
+
+  if (category === 'case') {
+    return base + `请深度拆解一个经典的设计案例（可以是室内、建筑、产品、园林）。
+
+返回JSON格式：
+{
+  "title": "<案例名称，有吸引力>",
+  "content": "<深度拆解：这个案例的背景是什么？设计师是谁？核心设计决策有哪些？每个决策背后的逻辑是什么？这个案例对当代设计的启发是什么？写3-5段，每段聚焦一个要点>",
+  "takeaway": "<一句话核心收获，15-30字>",
+  "relatedTraining": "<建议关联的训练模式：needInsight/essence/pyramid/multiAngle/prep/connection/scenario>"
+}
+直接返回JSON，用中文。`;
+  }
+
+  if (category === 'quote') {
+    return base + `请分享一条有深度的设计金句（可以是大师名言或你自己的设计洞察），并展开背后的故事和应用场景。
+
+返回JSON格式：
+{
+  "title": "<金句原文，加引号>",
+  "content": "<这句话是谁说的/从哪来的？背后的设计哲学是什么？在实际设计中怎么用？举一个具体的设计场景说明这句话的含义。写3-5段>",
+  "takeaway": "<一句话核心收获，15-30字>",
+  "relatedTraining": "<建议关联的训练模式>"
+}
+直接返回JSON，用中文。`;
+  }
+
+  if (category === 'fengshui') {
+    return base + `请分享一个风水知识点，并且一定要落地到具体的设计实践中——只说风水概念不落地没有价值。
+
+返回JSON格式：
+{
+  "title": "<风水知识点名称，如'玄关的藏风聚气'>",
+  "content": "<这个风水概念的核心逻辑是什么？背后的原理（不要玄学化，用理性语言解释）。在室内设计中如何具体落地？举一个设计前后的对比例子。写3-5段>",
+  "takeaway": "<一句话核心收获，15-30字>",
+  "relatedTraining": "<建议关联的训练模式>"
+}
+要求：去玄学化，用理性设计语言解释风水的合理性。直接返回JSON，用中文。`;
+  }
+
+  if (category === 'technique') {
+    return base + `请拆解一个具体的设计手法（如借景、对景、框景、透景、障景、留白、对比、节奏、尺度、光影等）。
+
+返回JSON格式：
+{
+  "title": "<手法名称>",
+  "content": "<这个手法的定义是什么？设计原理是什么？在哪些经典作品中出现过？在当代设计中如何运用？举2-3个具体的设计场景说明。写3-5段>",
+  "takeaway": "<一句话核心收获，15-30字>",
+  "relatedTraining": "<建议关联的训练模式>"
+}
+直接返回JSON，用中文。`;
+  }
+
+  if (category === 'architecture') {
+    return base + `请介绍一座值得设计师学习的建筑（可以是经典或当代），重点分析它对室内/空间设计的启发。
+
+返回JSON格式：
+{
+  "title": "<建筑名称，标注设计师和年代>",
+  "content": "<这座建筑的核心设计理念是什么？空间组织有什么特点？光线、材质、动线是怎么处理的？这些处理手法对室内设计有什么启发？写3-5段>",
+  "takeaway": "<一句话核心收获，15-30字>",
+  "relatedTraining": "<建议关联的训练模式>"
+}
+直接返回JSON，用中文。`;
+  }
+
+  if (category === 'random') {
+    return base + `请从以下分类中随机选一个，推送一条高质量的设计内容：经典案例拆解、设计金句、风水知识落地、设计手法解析、建筑巡礼。
+
+返回JSON格式：
+{
+  "title": "<标题>",
+  "content": "<内容，3-5段，有深度>",
+  "takeaway": "<一句话核心收获，15-30字>",
+  "relatedTraining": "<needInsight/essence/pyramid/multiAngle/prep/connection/scenario 之一>"
+}
+直接返回JSON，用中文。`;
+  }
+
+  return '';
+}
+
+function parseReadingResponse(text) {
+  try {
+    let jsonStr = text.trim();
+    if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    }
+    const start = jsonStr.indexOf('{'), end = jsonStr.lastIndexOf('}');
+    if (start >= 0 && end > start) jsonStr = jsonStr.slice(start, end + 1);
+
+    let parsed;
+    try { parsed = JSON.parse(jsonStr); } catch (e1) {
+      try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); } catch (e2) { return null; }
+    }
+    return parsed;
+  } catch (e) { return null; }
+}
+
+function renderReadingContent() {
+  const c = readingState.content;
+  if (!c) return;
+
+  const cat = READING_CATEGORIES.find(x => x.key === readingState.category);
+  document.getElementById('reading-content').innerHTML = `
+    <div class="reading-card">
+      <div class="rc-title">${cat ? cat.icon + ' ' : ''}${c.title || ''}</div>
+      <div class="rc-body">${(c.content || '').replace(/\n/g, '<br>')}</div>
+      ${c.takeaway ? `<div class="rc-takeaway">${c.takeaway}</div>` : ''}
+    </div>`;
+
+  document.getElementById('reading-actions').style.display = 'flex';
+
+  // Update fav button state
+  const favBtn = document.getElementById('reading-fav-btn');
+  const favs = getReadingFavorites();
+  const isFaved = favs.some(f => f.title === c.title && f.ts === c.ts);
+  favBtn.textContent = isFaved ? '⭐ 已收藏' : '☆ 收藏';
+  favBtn.classList.toggle('fav-active', isFaved);
+}
+
+async function refreshReading() {
+  if (!readingState.category) return;
+  await loadReadingContent(readingState.category);
+}
+
+function toggleFavorite() {
+  const c = readingState.content;
+  if (!c) return;
+  const favs = getReadingFavorites();
+  const idx = favs.findIndex(f => f.title === c.title && f.ts === c.ts);
+  if (idx >= 0) {
+    favs.splice(idx, 1);
+    toast('已取消收藏');
+  } else {
+    favs.unshift({
+      title: c.title,
+      content: c.content,
+      takeaway: c.takeaway,
+      category: c.category,
+      ts: c.ts
+    });
+    if (favs.length > 50) favs.length = 50;
+    toast('已收藏 ⭐');
+  }
+  localStorage.setItem('tt_reading_favs', JSON.stringify(favs));
+  renderReadingContent();
+}
+
+function getReadingFavorites() {
+  try { return JSON.parse(localStorage.getItem('tt_reading_favs') || '[]'); } catch (e) { return []; }
+}
+
+function linkToTraining() {
+  const c = readingState.content;
+  if (!c || !c.relatedTraining) {
+    toast('当前内容无关联训练');
+    return;
+  }
+  const validTypes = Object.keys(TOPICS);
+  if (!validTypes.includes(c.relatedTraining)) {
+    toast('关联训练类型无效');
+    return;
+  }
+  showScreen('home');
+  setTimeout(() => startExercise(c.relatedTraining), 300);
+}
+
+function showReadingFavorites() {
+  const favs = getReadingFavorites();
+  const list = document.getElementById('reading-fav-list');
+  if (!favs.length) {
+    list.innerHTML = '<div class="empty-state">还没有收藏内容<br>在阅览室看到好的点 ⭐ 收藏</div>';
+  } else {
+    list.innerHTML = favs.map((f, i) => {
+      const cat = READING_CATEGORIES.find(x => x.key === f.category);
+      const preview = (f.content || '').replace(/<br>/g, ' ').slice(0, 80);
+      return `<div class="fav-item" onclick="viewFavorite(${i})">
+        <div class="fav-title">${cat ? cat.icon + ' ' : ''}${f.title || ''}</div>
+        <div class="fav-preview">${preview}…</div>
+        <div class="fav-meta">${cat ? cat.label : ''} · ${new Date(f.ts).toLocaleDateString('zh-CN')}</div>
+      </div>`;
+    }).join('');
+  }
+  showScreen('reading-fav');
+}
+
+function viewFavorite(index) {
+  const favs = getReadingFavorites();
+  const f = favs[index];
+  if (!f) return;
+  readingState.category = f.category;
+  readingState.content = f;
+  // Rebuild tabs
+  document.getElementById('reading-tabs').innerHTML = READING_CATEGORIES.map(c =>
+    `<button class="reading-tab${c.key === f.category ? ' active' : ''}" onclick="selectReadingCategory('${c.key}')">${c.icon} ${c.label}</button>`
+  ).join('');
+  renderReadingContent();
+  showScreen('reading-room');
+}
+
+// Add favorites button to reading room header
+function updateReadingHeader() {
+  // The favorites link is shown in the actions when content exists
+}
+// ======== END READING ROOM ========
 
 // ======== INIT ========
 (async function init() {
