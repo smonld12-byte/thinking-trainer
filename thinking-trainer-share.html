@@ -1223,7 +1223,39 @@ function nextItem(type) {
   }
   const id = itemQueues[type].shift();
   itemQueues[type]._lastPicked = id;
+  saveQueues(); // persist queue to localStorage
   return items.find(it => it.id === id);
+}
+
+// ======== QUEUE PERSISTENCE ========
+function saveQueues() {
+  const data = {};
+  for (const [type, queue] of Object.entries(itemQueues)) {
+    if (Array.isArray(queue) && queue.length > 0) {
+      data[type] = { queue: [...queue], lastPicked: queue._lastPicked || null };
+    }
+  }
+  localStorage.setItem('tt_queues', JSON.stringify(data));
+}
+
+function loadQueues() {
+  try {
+    const raw = localStorage.getItem('tt_queues');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    for (const [type, val] of Object.entries(data)) {
+      const ids = val.queue || [];
+      // Filter out IDs that no longer exist in TOPICS
+      const validIds = ids.filter(id => {
+        const items = TOPICS[type]?.items;
+        return items && items.some(it => it.id === id);
+      });
+      if (validIds.length > 0) {
+        validIds._lastPicked = val.lastPicked || null;
+        itemQueues[type] = validIds;
+      }
+    }
+  } catch (e) { /* ignore corrupt data */ }
 }
 
 function startExercise(type, forceItemId) {
@@ -2513,6 +2545,7 @@ function toast(msg) {
 
 // ======== INIT ========
 (async function init() {
+  loadQueues(); // restore question queue from previous session
   if (checkLogin()) {
     updateHome();
     showScreen('home');
