@@ -2345,6 +2345,9 @@ async function generateAiTopic(type) {
       structure: parsed.structure || {},
       _aiGenerated: true
     };
+    // Cache for retroactive scoring (memory + localStorage)
+    _aiItemCache[item.id] = item;
+    _persistAiCache();
 
     // Copy extra fields
     if (parsed.keywords) item.keywords = parsed.keywords;
@@ -3087,8 +3090,22 @@ function getUserFieldLabel(key) {
 function getItemStructure(type, itemId) {
   const data = TOPICS[type];
   if (!data) return null;
+  // Check pre-built items first
   const item = data.items.find(it => it.id === itemId);
-  return item ? item.structure : null;
+  if (item) return item.structure;
+  // Fallback: AI-generated items cached in session
+  if (itemId && itemId.startsWith('ai_') && _aiItemCache[itemId]) {
+    return _aiItemCache[itemId].structure;
+  }
+  return null;
+}
+
+// Cache for AI-generated items so retroactive scoring can find them
+const _aiItemCache = (() => {
+  try { return JSON.parse(localStorage.getItem('tt_ai_items') || '{}'); } catch(e) { return {}; }
+})();
+function _persistAiCache() {
+  try { localStorage.setItem('tt_ai_items', JSON.stringify(_aiItemCache)); } catch(e) {}
 }
 
 // Update an existing training record in Supabase
