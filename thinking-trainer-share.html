@@ -1367,10 +1367,15 @@ async function saveHistory(entry) {
       time_spent: entry.timeSpent || 0,
       created_at: new Date().toISOString()
     };
-    console.log('[DEBUG] saveHistory: POST to Supabase...', { user_id: row.user_id, type: row.type, created_at: row.created_at });
+    // Remove fields that don't exist in Supabase schema yet
+    const safeRow = { ...row };
+    delete safeRow.golden_quotes;
+    delete safeRow.thinking_methodology;
+
+    console.log('[DEBUG] saveHistory: POST to Supabase...', { user_id: safeRow.user_id, type: safeRow.type, created_at: safeRow.created_at });
     const saveResult = await supabaseFetch('training_records', {
       method: 'POST',
-      body: JSON.stringify(row)
+      body: JSON.stringify(safeRow)
     });
     console.log('[DEBUG] saveHistory: POST response status=' + saveResult.status + ' ok=' + saveResult.ok);
     // Update last active (non-critical, don't fail on error)
