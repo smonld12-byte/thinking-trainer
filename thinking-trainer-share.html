@@ -1310,10 +1310,11 @@ function $(id) { return document.getElementById(id); }
 
 // ======== STORAGE (Supabase) ========
 async function getHistory() {
-  if (!currentUser) return [];
+  if (!currentUser) { console.warn('[DEBUG] getHistory: currentUser is null'); return []; }
   try {
     const res = await supabaseFetch(`training_records?user_id=eq.${currentUser.id}&order=created_at.desc&limit=50`);
     const data = await res.json();
+    console.log('[DEBUG] getHistory: fetched ' + data.length + ' records for user=' + currentUser.nickname);
     // Convert Supabase format to local format
     return data.map(r => ({
       type: r.type,
@@ -1343,8 +1344,9 @@ async function getHistory() {
 }
 
 async function saveHistory(entry) {
-  if (!currentUser) return false;
+  if (!currentUser) { console.warn('[DEBUG] saveHistory: currentUser is null, aborting'); return false; }
   try {
+    console.log('[DEBUG] saveHistory: saving entry for user=' + currentUser.nickname + ' type=' + entry.typeName + ' topic=' + (entry.topic || '').slice(0, 30));
     const row = {
       user_id: currentUser.id,
       type: entry.type,
@@ -1365,10 +1367,12 @@ async function saveHistory(entry) {
       time_spent: entry.timeSpent || 0,
       created_at: new Date().toISOString()
     };
-    await supabaseFetch('training_records', {
+    console.log('[DEBUG] saveHistory: POST to Supabase...', { user_id: row.user_id, type: row.type, created_at: row.created_at });
+    const saveResult = await supabaseFetch('training_records', {
       method: 'POST',
       body: JSON.stringify(row)
     });
+    console.log('[DEBUG] saveHistory: POST response status=' + saveResult.status + ' ok=' + saveResult.ok);
     // Update last active (non-critical, don't fail on error)
     supabaseFetch(`users?id=eq.${currentUser.id}`, {
       method: 'PATCH',
@@ -1894,6 +1898,7 @@ function collectAnswers() {
 }
 
 function submitExercise() {
+  console.log('[DEBUG] submitExercise called, track=' + currentTrack + ' type=' + currentType + ' user=' + (currentUser ? currentUser.nickname : 'NULL'));
   const answers = collectAnswers();
   const hasContent = Object.values(answers).some(v => v.length > 0);
   if (!hasContent) {
