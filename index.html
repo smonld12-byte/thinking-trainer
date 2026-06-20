@@ -2722,8 +2722,17 @@ async function saveAndNext() {
     }
   } else if (Object.keys(currentRatings).length > 0) {
     // Save manual scores
-    saveRating();
+    await saveRating();
     return;
+  }
+  // No ratings and no AI result — still save without scores
+  if (pendingEntry) {
+    console.log('[DEBUG] saveAndNext: no ratings, saving without scores');
+    await saveHistory(pendingEntry);
+    pendingEntry = null;
+    toast('记录已保存 ✅');
+  } else {
+    console.warn('[DEBUG] saveAndNext: pendingEntry is null, cannot save');
   }
   setTimeout(() => nextExercise(), 500);
 }
