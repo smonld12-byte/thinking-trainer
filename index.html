@@ -2581,6 +2581,7 @@ function buildTopicPrompt(type) {
 - researchHints给2个思考方向提示，帮助用户找到分析角度
 - 本质洞察要有深度，不要停留在表面
 用中文，直接返回JSON。`;
+  }
   if (type === 'infoProcess') {
     const stage = currentInfoStage || 'extract';
     const stageInfo = data.stages.find(s => s.key === stage);
