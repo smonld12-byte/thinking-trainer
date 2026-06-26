@@ -456,6 +456,61 @@ body {
 .home-reading-card .hrc-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
 .home-reading-card .hrc-name { font-size: 1rem; font-weight: 700; }
 .home-reading-card .hrc-desc { font-size: .75rem; color: var(--text-dim); margin-top: 4px; }
+
+/* Info Process Mode */
+.info-stages {
+  display: flex; gap: 6px; overflow-x: auto; margin-bottom: 16px;
+  padding-bottom: 4px; -webkit-overflow-scrolling: touch;
+}
+.info-stages::-webkit-scrollbar { display: none; }
+.info-stage-tab {
+  flex-shrink: 0; padding: 8px 14px; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text-dim); font-size: .78rem; cursor: pointer;
+  font-family: inherit; white-space: nowrap; transition: all .2s;
+}
+.info-stage-tab.active {
+  background: var(--gold); color: #fff; border-color: var(--gold);
+  font-weight: 600;
+}
+.info-stage-tab:active { transform: scale(.95); }
+.info-stage-tab .stage-num {
+  display: inline-block; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--bg-input); color: var(--text-dim); font-size: .65rem;
+  line-height: 18px; text-align: center; margin-right: 4px;
+}
+.info-stage-tab.active .stage-num { background: rgba(255,255,255,.3); color: #fff; }
+
+.info-material {
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 16px; margin-bottom: 16px;
+  font-size: .9rem; line-height: 1.9; color: var(--text);
+  white-space: pre-wrap; max-height: 300px; overflow-y: auto;
+}
+.info-material .material-label {
+  font-size: .72rem; color: var(--text-dim); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.info-material .material-label .beta-badge {
+  background: var(--border); color: var(--text-dim); font-size: .65rem;
+  padding: 2px 8px; border-radius: 10px;
+}
+
+.countdown-bar {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); margin-bottom: 12px; font-size: .85rem;
+}
+.countdown-bar .cd-icon { font-size: 1.1rem; }
+.countdown-bar .cd-time { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.countdown-bar .cd-label { color: var(--text-dim); font-size: .75rem; }
+.countdown-bar.warn .cd-time { color: #d47878; animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+.stage-desc {
+  font-size: .72rem; color: var(--text-dim); margin-bottom: 12px;
+  padding: 6px 12px; background: var(--bg-input); border-radius: 8px;
+}
 </style>
 </head>
 <body>
