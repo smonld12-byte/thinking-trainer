@@ -596,6 +596,7 @@ body {
     <span class="ex-title" id="ex-title"></span>
   </div>
   <p class="ex-instruction" id="ex-instruction"></p>
+  <div id="ex-stage-tabs" class="info-stages" style="display:none"></div>
   <div class="topic-card">
     <div class="label">题目</div>
     <div class="question" id="ex-topic"></div>
@@ -1938,6 +1939,16 @@ async function startExercise(type, forceItemId) {
     $('btn-timer').style.display = '';
   } else if (forceItemId) {
     currentItem = data.items.find(it => it.id === forceItemId) || nextItem(type);
+  } else if (type === 'infoProcess' && !isAI) {
+    // For infoProcess autonomous: filter items by current stage
+    const stageItems = data.items.filter(it => it.stage === currentInfoStage);
+    if (!stageItems.length) {
+      toast('该阶段暂无预设题目，请切换阶段或使用 AI 驱动');
+      showScreen('home');
+      return;
+    }
+    // Pick next from filtered items (simple random, avoiding same as last)
+    currentItem = stageItems[Math.floor(Math.random() * stageItems.length)];
   } else {
     currentItem = nextItem(type);
   }
@@ -1978,8 +1989,28 @@ async function startExercise(type, forceItemId) {
     hintsDiv.innerHTML = '';
   }
 
+  // InfoProcess: render stage tabs
+  const stageTabsDiv = document.getElementById('ex-stage-tabs');
+  if (type === 'infoProcess') {
+    currentInfoStage = currentInfoStage || 'extract';
+    stageTabsDiv.style.display = '';
+    stageTabsDiv.innerHTML = data.stages.map((s, i) =>
+      `<button class="info-stage-tab${s.key === currentInfoStage ? ' active' : ''}" onclick="switchInfoStage('${s.key}')">
+        <span class="stage-num">${i + 1}</span>${s.label}
+      </button>`
+    ).join('');
+  } else {
+    stageTabsDiv.style.display = 'none';
+  }
+
   buildInputs(type, currentItem);
   showScreen('exercise');
+}
+
+function switchInfoStage(stageKey) {
+  if (currentType !== 'infoProcess') return;
+  currentInfoStage = stageKey;
+  startExercise('infoProcess');
 }
 
 function buildInputs(type, item) {
@@ -2077,6 +2108,7 @@ function collectAnswers() {
 }
 
 function submitExercise() {
+  clearInfoTimers();
   const answers = collectAnswers();
   const hasContent = Object.values(answers).some(v => v.length > 0);
   if (!hasContent) {
@@ -2212,6 +2244,7 @@ async function goHomeFromReview() {
 function nextExercise() { startExercise(currentType); }
 
 function confirmBack() {
+  clearInfoTimers();
   const answers = collectAnswers();
   const hasContent = Object.values(answers).some(v => v.length > 0);
   if (hasContent && !confirm('返回首页将丢弃当前内容，确定吗？')) return;
@@ -3459,6 +3492,7 @@ function pauseTimer() {
 }
 
 function stopTimer() {
+  clearInfoTimers();
   timerOn = false;
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   $('btn-timer').classList.remove('on');
