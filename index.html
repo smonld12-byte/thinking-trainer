@@ -2496,6 +2496,55 @@ function buildTopicPrompt(type) {
 - researchHints给2个思考方向提示，帮助用户找到分析角度
 - 本质洞察要有深度，不要停留在表面
 用中文，直接返回JSON。`;
+  if (type === 'infoProcess') {
+    const stage = currentInfoStage || 'extract';
+    const stageInfo = data.stages.find(s => s.key === stage);
+
+    if (stage === 'extract') {
+      return base + `生成一个适合"关键词提取"训练的阅读材料：
+{
+  "topic": "阅读以下短文，提取3-5个关键词",
+  "material": "<一篇约300字的短文，领域随机（科普/商业/心理/设计/社会现象等），内容有明确的核心信息点>",
+  "stage": "extract",
+  "structure": { "keywords": ["<关键词1>", "<关键词2>", "<关键词3>", "<关键词4>", "<关键词5>"] }
+}
+要求：短文有实质信息量，关键词能准确代表核心内容。用中文，直接返回JSON。`;
+    }
+
+    if (stage === 'summarize') {
+      return base + `生成一个适合"一句话总结"训练的阅读材料：
+{
+  "topic": "阅读以下短文，用一句话总结核心内容（不超过50字）",
+  "material": "<一篇约300-500字的短文，有明确的核心观点或事件，信息密度适中>",
+  "stage": "summarize",
+  "structure": { "summary": "<一句话总结，覆盖核心信息，不超过50字>" }
+}
+要求：短文不能太散（多个不相关的点），要有一个贯穿的核心主题。用中文，直接返回JSON。`;
+    }
+
+    if (stage === 'retell') {
+      return base + `生成一个适合"三点复述"训练的素材：
+{
+  "topic": "<训练标题，如'阅读以下对话，用三点框架复述核心观点'>",
+  "material": "<一段模拟对话/观点陈述/访谈，约500字。可以是两个人辩论、专家讲解、或者一段有结构的观点输出。内容有明确的信息层次，适合被拆成3个要点>",
+  "stage": "retell",
+  "structure": { "points": ["<要点1>", "<要点2>", "<要点3>"] }
+}
+要求：素材有明显的3层信息结构，复述时要能自然拆成3个要点。领域随机但内容有讨论价值。用中文，直接返回JSON。`;
+    }
+
+    if (stage === 'retellTimed') {
+      return base + `生成一个适合"计时复述+评论"训练的素材：
+{
+  "topic": "<训练标题>",
+  "material": "<一段模拟采访/辩论/演讲片段，约600字。内容有观点冲突或反直觉洞察，适合引发评论>",
+  "stage": "retellTimed",
+  "structure": { "retelling": "<参考复述：准确概括原文核心>", "comment": "<参考评论：对观点的分析和见解>" }
+}
+要求：素材要有一定的观点张力——有值得评论的"抓手"。不能是平淡的信息陈述。用中文，直接返回JSON。`;
+    }
+
+    return '';
   }
   return '';
 }
@@ -2579,6 +2628,8 @@ async function generateAiTopic(type) {
     if (parsed.dims) item.dims = parsed.dims;
     if (parsed.eventContext) item.eventContext = parsed.eventContext;
     if (parsed.researchHints) item.researchHints = parsed.researchHints;
+    if (parsed.material) item.material = parsed.material;
+    if (parsed.stage) item.stage = parsed.stage;
 
     return item;
   } catch (e) {
