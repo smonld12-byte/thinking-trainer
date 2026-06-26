@@ -2017,6 +2017,43 @@ function buildInputs(type, item) {
     addInput(container, '① 表面现象', '这个事件看起来是什么样？客观描述发生了什么。', 'phenomenon', true);
     addInput(container, '② 本质洞察', '现象背后的本质是什么？用一句话说清楚底层规律。', 'essence', true);
     addInput(container, '③ 思考路径', '你是如何穿透表象看到本质的？写出你的推理过程。', 'thinkingPath', true);
+  } else if (type === 'infoProcess') {
+    const stage = currentInfoStage;
+    // Show material (the article/script to read)
+    const materialDiv = document.createElement('div');
+    materialDiv.className = 'info-material';
+    const data = TOPICS.infoProcess;
+    const stageInfo = data.stages.find(s => s.key === stage);
+
+    // Audio beta badge for stage 3 & 4
+    const audioBeta = (stage === 'retell' || stage === 'retellTimed')
+      ? '<span class="beta-badge">🔊 模拟听读材料（Beta）</span>' : '';
+
+    materialDiv.innerHTML = `
+      <div class="material-label">📄 阅读材料${audioBeta}</div>
+      <div>${item.material || '（AI 正在生成素材…）'}</div>
+    `;
+    container.appendChild(materialDiv);
+
+    // Stage description
+    const descDiv = document.createElement('div');
+    descDiv.className = 'stage-desc';
+    descDiv.textContent = '📌 ' + (stageInfo ? stageInfo.desc : '');
+    container.appendChild(descDiv);
+
+    // Inputs per stage
+    if (stage === 'extract') {
+      addInput(container, '提取关键词', '输入3-5个核心关键词，用逗号或空格分隔', 'keywords', false);
+    } else if (stage === 'summarize') {
+      addInput(container, '一句话总结', '用一句话概括全文核心内容（不超过50字）', 'summary', true);
+    } else if (stage === 'retell') {
+      addInput(container, '要点一', '第一个核心要点', 'point1', true);
+      addInput(container, '要点二', '第二个核心要点', 'point2', true);
+      addInput(container, '要点三', '第三个核心要点', 'point3', true);
+    } else if (stage === 'retellTimed') {
+      addInput(container, '复述内容', '用自己的话复述原文核心内容', 'retelling', true);
+      addInput(container, '个人评论', '你对这个观点/事件的看法和分析', 'comment', true);
+    }
   }
 }
 
