@@ -2004,6 +2004,13 @@ async function startExercise(type, forceItemId) {
   }
 
   buildInputs(type, currentItem);
+
+  // InfoProcess stage 4: start reading timer
+  if (type === 'infoProcess' && currentInfoStage === 'retellTimed') {
+    clearInfoTimers();
+    startReadingTimer();
+  }
+
   showScreen('exercise');
 }
 
@@ -2013,8 +2020,62 @@ function switchInfoStage(stageKey) {
   startExercise('infoProcess');
 }
 
+let _infoReadingTimer = null;
+let _infoOutputTimer = null;
+let _infoReadingSeconds = 180;
+let _infoOutputSeconds = 180;
+
 function clearInfoTimers() {
-  // Stub — fully implemented in Task 8 (reading + output dual countdown for stage 4)
+  if (_infoReadingTimer) { clearInterval(_infoReadingTimer); _infoReadingTimer = null; }
+  if (_infoOutputTimer) { clearInterval(_infoOutputTimer); _infoOutputTimer = null; }
+  _infoReadingSeconds = 180;
+  _infoOutputSeconds = 180;
+}
+
+function startReadingTimer() {
+  _infoReadingSeconds = 180;
+  const cdEl = document.getElementById('info-countdown');
+  if (!cdEl) return;
+
+  _infoReadingTimer = setInterval(() => {
+    _infoReadingSeconds--;
+    const min = Math.floor(_infoReadingSeconds / 60);
+    const sec = _infoReadingSeconds % 60;
+    cdEl.innerHTML = `<span class="cd-icon">📖</span><span class="cd-label">阅读倒计时</span><span class="cd-time">${min}:${sec.toString().padStart(2, '0')}</span>`;
+
+    if (_infoReadingSeconds <= 30) cdEl.classList.add('warn');
+
+    if (_infoReadingSeconds <= 0) {
+      clearInterval(_infoReadingTimer);
+      _infoReadingTimer = null;
+      cdEl.classList.remove('warn');
+      cdEl.innerHTML = '<span class="cd-icon">✏️</span><span class="cd-label">请开始复述+评论</span><span class="cd-time">3:00</span>';
+      startOutputTimer();
+    }
+  }, 1000);
+}
+
+function startOutputTimer() {
+  _infoOutputSeconds = 180;
+  const cdEl = document.getElementById('info-countdown');
+  if (!cdEl) return;
+
+  _infoOutputTimer = setInterval(() => {
+    _infoOutputSeconds--;
+    const min = Math.floor(_infoOutputSeconds / 60);
+    const sec = _infoOutputSeconds % 60;
+    cdEl.innerHTML = `<span class="cd-icon">✏️</span><span class="cd-label">输出倒计时</span><span class="cd-time">${min}:${sec.toString().padStart(2, '0')}</span>`;
+
+    if (_infoOutputSeconds <= 30) cdEl.classList.add('warn');
+
+    if (_infoOutputSeconds <= 0) {
+      clearInterval(_infoOutputTimer);
+      _infoOutputTimer = null;
+      cdEl.classList.remove('warn');
+      cdEl.innerHTML = '<span class="cd-icon">⏰</span><span class="cd-label">时间到</span><span class="cd-time">0:00</span>';
+      submitExercise(); // Auto-submit when time is up
+    }
+  }, 1000);
 }
 
 function buildInputs(type, item) {
@@ -2086,6 +2147,11 @@ function buildInputs(type, item) {
       addInput(container, '要点二', '第二个核心要点', 'point2', true);
       addInput(container, '要点三', '第三个核心要点', 'point3', true);
     } else if (stage === 'retellTimed') {
+      const countdownDiv = document.createElement('div');
+      countdownDiv.id = 'info-countdown';
+      countdownDiv.className = 'countdown-bar';
+      countdownDiv.innerHTML = '<span class="cd-icon">⏳</span><span class="cd-label">阅读倒计时</span><span class="cd-time">3:00</span>';
+      container.appendChild(countdownDiv);
       addInput(container, '复述内容', '用自己的话复述原文核心内容', 'retelling', true);
       addInput(container, '个人评论', '你对这个观点/事件的看法和分析', 'comment', true);
     }
