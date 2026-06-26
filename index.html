@@ -2209,6 +2209,24 @@ function showReview(answers, timeSpent) {
     html += `<div class="answer-block structure-ref"><div class="block-label">表面现象</div><div class="block-content">${struct.phenomenon}</div></div>`;
     html += `<div class="answer-block structure-ref"><div class="block-label">本质洞察</div><div class="block-content">${struct.essence}</div></div>`;
     html += `<div class="answer-block structure-ref"><div class="block-label">思考路径</div><div class="block-content">${struct.thinkingPath}</div></div>`;
+  } else if (currentType === 'infoProcess') {
+    const stage = currentItem.stage || 'extract';
+    if (stage === 'extract' && struct.keywords) {
+      html += `<div class="answer-block structure-ref"><div class="block-label">参考关键词</div><div class="block-content">${struct.keywords.join('、')}</div></div>`;
+    } else if (stage === 'summarize' && struct.summary) {
+      html += `<div class="answer-block structure-ref"><div class="block-label">参考总结</div><div class="block-content">${struct.summary}</div></div>`;
+    } else if (stage === 'retell' && struct.points) {
+      struct.points.forEach((p, i) => {
+        html += `<div class="answer-block structure-ref"><div class="block-label">参考要点${i + 1}</div><div class="block-content">${p}</div></div>`;
+      });
+    } else if (stage === 'retellTimed') {
+      if (struct.retelling) {
+        html += `<div class="answer-block structure-ref"><div class="block-label">参考复述</div><div class="block-content">${struct.retelling}</div></div>`;
+      }
+      if (struct.comment) {
+        html += `<div class="answer-block structure-ref"><div class="block-label">参考评论</div><div class="block-content">${struct.comment}</div></div>`;
+      }
+    }
   }
 
   // Pre-written golden quotes for autonomous track
@@ -2669,6 +2687,23 @@ function buildScoringPrompt(entry, dims) {
     refLines = `表面需求：${struct.surface}\n深层需求：${struct.deep}\n判断逻辑：${struct.reasoning}`;
   } else if (entry.type === 'essence') {
     refLines = `表面现象：${struct.phenomenon}\n本质洞察：${struct.essence}\n思考路径：${struct.thinkingPath}`;
+  } else if (entry.type === 'infoProcess') {
+    const itemStage = entry._item?.stage || 'extract';
+    if (itemStage === 'extract') {
+      refLines = `参考关键词：${(struct.keywords || []).join('、')}`;
+    } else if (itemStage === 'summarize') {
+      refLines = `参考总结：${struct.summary || ''}`;
+    } else if (itemStage === 'retell') {
+      refLines = (struct.points || []).map((p, i) => `要点${i + 1}：${p}`).join('\n');
+    } else if (itemStage === 'retellTimed') {
+      refLines = `参考复述：${struct.retelling || ''}\n参考评论：${struct.comment || ''}`;
+    }
+  }
+
+  // Include reading material for infoProcess scoring
+  let materialSection = '';
+  if (entry.type === 'infoProcess' && entry._item.material) {
+    materialSection = `\n【阅读材料】\n${entry._item.material}\n`;
   }
 
   const isNewMode = entry.type === 'needInsight' || entry.type === 'essence';
@@ -2687,7 +2722,7 @@ ${dimLines}
 
 【题目】
 ${topic}
-
+${materialSection}
 【用户回答】
 ${answerLines}
 
