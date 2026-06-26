@@ -2016,6 +2016,7 @@ async function startExercise(type, forceItemId) {
 
 function switchInfoStage(stageKey) {
   if (currentType !== 'infoProcess') return;
+  clearInfoTimers();
   currentInfoStage = stageKey;
   startExercise('infoProcess');
 }
