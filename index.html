@@ -14,6 +14,7 @@
   --gold: #b8942e;
   --gold-dim: #8a6d20;
   --border: #e0dcd4;
+  --warn: #d47878;
   --radius: 14px;
   --radius-sm: 10px;
 }
@@ -504,7 +505,7 @@ body {
 .countdown-bar .cd-icon { font-size: 1.1rem; }
 .countdown-bar .cd-time { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
 .countdown-bar .cd-label { color: var(--text-dim); font-size: .75rem; }
-.countdown-bar.warn .cd-time { color: #d47878; animation: pulse 1s ease-in-out infinite; }
+.countdown-bar.warn .cd-time { color: var(--warn); animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
 .stage-desc {
@@ -1968,8 +1969,10 @@ async function startExercise(type, forceItemId) {
   const isQuick = quickModes.includes(type);
   $('timer-display').textContent = isQuick ? '建议用时 1-2 分钟' : '建议用时 3-5 分钟，展开叙述';
 
-  // Auto-start timer
-  setTimeout(() => startTimer(), 500);
+  // Auto-start timer (skip for infoProcess retellTimed which has its own timer)
+  if (!(type === 'infoProcess' && currentInfoStage === 'retellTimed')) {
+    setTimeout(() => startTimer(), 500);
+  }
 
   // Show event context for essence mode
   const ctxDiv = $('ex-event-context');
@@ -2073,6 +2076,14 @@ function startOutputTimer() {
       clearInterval(_infoOutputTimer);
       _infoOutputTimer = null;
       cdEl.classList.remove('warn');
+      // Check if user has typed anything before auto-submitting
+      const answers = collectAnswers();
+      const hasContent = Object.values(answers).some(v => v.length > 0);
+      if (!hasContent) {
+        cdEl.innerHTML = '<span class="cd-icon">⏰</span><span class="cd-label">时间到，请至少写一点内容</span><span class="cd-time">3:00</span>';
+        startOutputTimer(); // Restart output timer
+        return;
+      }
       cdEl.innerHTML = '<span class="cd-icon">⏰</span><span class="cd-label">时间到</span><span class="cd-time">0:00</span>';
       submitExercise(); // Auto-submit when time is up
     }
