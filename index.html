@@ -2217,11 +2217,16 @@ const SCORING_DIMS = {
     { key: 'penetration', label: '穿透力', desc: '是否真正穿透了表面现象而非在表面绕圈' },
     { key: 'insight', label: '洞察力', desc: '本质判断的深刻程度和独特视角' },
     { key: 'clarity', label: '清晰度', desc: '思考路径的表达是否清晰可循、逻辑自洽' }
+  ],
+  infoProcess: [
+    { key: 'accuracy', label: '信息准确度', desc: '提取的关键信息是否准确、不曲解原意' },
+    { key: 'completeness', label: '信息完整度', desc: '是否覆盖了核心信息，有无重大遗漏' },
+    { key: 'conciseness', label: '简洁度', desc: '表达是否简洁精准，无冗余废话' }
   ]
 };
 
 // Keep a flat list of all possible dim keys for charts
-const ALL_DIM_KEYS = ['structure', 'logic', 'depth', 'comprehensiveness', 'insight', 'persuasiveness', 'connection', 'creativity', 'fluency', 'expression', 'diagnosis', 'reasoning', 'strategy', 'script', 'penetration', 'clarity'];
+const ALL_DIM_KEYS = ['structure', 'logic', 'depth', 'comprehensiveness', 'insight', 'persuasiveness', 'connection', 'creativity', 'fluency', 'expression', 'diagnosis', 'reasoning', 'strategy', 'script', 'penetration', 'clarity', 'accuracy', 'completeness', 'conciseness'];
 
 function getDims(type) { return SCORING_DIMS[type] || SCORING_DIMS['pyramid']; }
 
@@ -3229,6 +3234,13 @@ function getUserFieldLabel(key) {
   if (key === 'phenomenon') return '表面现象';
   if (key === 'essence') return '本质洞察';
   if (key === 'thinkingPath') return '思考路径';
+  if (key === 'keywords') return '关键词';
+  if (key === 'summary') return '一句话总结';
+  if (key === 'point1') return '要点一';
+  if (key === 'point2') return '要点二';
+  if (key === 'point3') return '要点三';
+  if (key === 'retelling') return '复述内容';
+  if (key === 'comment') return '个人评论';
   return key;
 }
 
@@ -3661,6 +3673,7 @@ const READING_CATEGORIES = [
   { key: 'random', icon: '🎲', label: '随机推送', desc: 'AI从以上分类中随机推送一条' },
 ];
 let readingState = { category: null, content: null, loading: false };
+let currentInfoStage = 'extract'; // current sub-stage for infoProcess mode
 
 function openReadingRoom() {
   // Build tabs
