@@ -512,6 +512,63 @@ body {
   font-size: .72rem; color: var(--text-dim); margin-bottom: 12px;
   padding: 6px 12px; background: var(--bg-input); border-radius: 8px;
 }
+
+/* Flow mode material */
+.flow-material {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 16px; margin-bottom: 16px; font-size: .9rem; line-height: 1.8;
+  color: var(--text); max-height: 300px; overflow-y: auto;
+}
+.flow-material .flow-material-label { font-size: .72rem; color: var(--gold); display: block; margin-bottom: 8px; font-weight: 600; }
+.flow-badge {
+  display: inline-block; font-size: .68rem; background: var(--bg-input);
+  color: var(--text-dim); padding: 2px 8px; border-radius: 10px; margin-left: 6px;
+}
+
+/* Expansion hints */
+.expansion-hints {
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 16px; margin-bottom: 16px; font-size: .75rem; color: var(--text-dim);
+  line-height: 1.8;
+}
+.expansion-hints .hint-title { font-size: .72rem; color: var(--gold); font-weight: 600; display: block; margin-bottom: 4px; }
+
+/* Reflection page */
+.reflection-section { margin-bottom: 24px; }
+.reflection-section .reflection-q {
+  font-size: .9rem; font-weight: 600; margin-bottom: 6px; color: var(--text);
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.reflection-section .reflection-q .q-num {
+  background: var(--gold); color: #fff; min-width: 22px; height: 22px;
+  border-radius: 50%; font-size: .7rem; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.reflection-section textarea {
+  width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-family: inherit;
+  font-size: .9rem; padding: 12px; resize: none; line-height: 1.6;
+  transition: border-color .2s; margin-bottom: 16px; min-height: 80px;
+}
+.reflection-section textarea:focus { outline: none; border-color: var(--gold); }
+.reflection-streak {
+  text-align: center; font-size: .85rem; color: var(--text-dim); margin: 12px 0;
+}
+.reflection-streak .streak-num { color: var(--gold); font-weight: 700; font-size: 1.2rem; }
+.reflection-history-item {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 16px; margin-bottom: 8px; font-size: .82rem;
+}
+.reflection-history-item .rh-date { color: var(--gold); font-weight: 600; margin-bottom: 6px; }
+.reflection-history-item .rh-answer { color: var(--text); line-height: 1.6; margin-bottom: 4px; }
+.reflection-history-item .rh-answer .rh-q { color: var(--text-dim); font-size: .72rem; }
+
+.btn-reflection {
+  display: block; width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; cursor: pointer; font-family: inherit;
+  font-size: .9rem; color: var(--text); text-align: center; transition: all .2s; margin-top: 16px;
+}
+.btn-reflection:active { background: var(--bg-input); border-color: var(--gold-dim); }
 </style>
 </head>
 <body>
@@ -588,6 +645,7 @@ body {
     <button class="btn-text" onclick="showSettings()" style="margin-left:8px">⚙️ 设置</button>
 	    <button class="btn-text" onclick="doLogout()" style="margin-left:8px">退出</button>
   </div>
+	  <button class="btn-reflection" onclick="showScreen('reflection')">🌙 每日反思</button>
 </section>
 
 <!-- Exercise Screen -->
@@ -774,6 +832,26 @@ body {
       <button class="btn-submit" style="flex:0;padding:8px 20px;font-size:.82rem" onclick="saveApiKey()">保存</button>
     </div>
   </div>
+	<!-- Reflection Screen -->
+	<section id="reflection" class="screen">
+	  <div class="progress-header">
+	    <button class="btn-back" onclick="showScreen('home')">←</button>
+	    <span style="font-weight:600">每日反思</span>
+	  </div>
+	  <div class="reflection-streak">
+	    🌙 连续反思 <span class="streak-num" id="reflection-streak-count">0</span> 天
+	  </div>
+	  <div class="reflection-section" id="reflection-questions"></div>
+	  <div class="ex-actions">
+	    <button class="btn-submit" onclick="saveReflection()">保存反思</button>
+	  </div>
+	  <div style="text-align:center;margin-top:12px">
+	    <button class="btn-text" onclick="toggleReflectionHistory()">📋 查看历史</button>
+	  </div>
+	  <div id="reflection-history" style="display:none;margin-top:16px"></div>
+	</section>
+
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1419,6 +1497,152 @@ const TOPICS = {
         structure: { retelling: '管理顾问认为最无效的会议特征是"轮流汇报"，本质是把同步信息（可用文档替代）和做决策混在一起。真正有效的会议只有一个目的：做决策。信息同步应在会前通过文档完成，会议只用来讨论和决定。', comment: '这个洞察很锋利——它重新定义了会议的价值。不是"我们开了会"就是好的，而是"我们做了决定"才是好的。把同步和决策分开，其实是在保护所有人的时间——信息可以异步消费，但决策需要同步碰撞。' }
       }
     ]
+  },
+
+  flow: {
+    title: '流畅输出',
+    icon: '🗣️',
+    hint: '不停 · 不改 · 不回头',
+    aiHint: 'AI实时生成素材 · 管道训练 · 智能评分',
+    instruction: '核心规则：不停、不改、不回头。嘴巴不要停，说错了继续，说漏了不补。这是神经系统级别的训练——不关心内容好坏，只关心管道通不通。\n\n💡 建议用语音转文字输入（移动端）或闭眼打字（桌面端）。',
+    items: [
+      {
+        id: 'f1',
+        subType: 'retell',
+        topic: '阅读以下文字，然后用自己的话不停顿地复述',
+        material: '设计师去工地，第一件事不是看图纸，是看光线。早晨的光和下午的光从不同角度进来，同一个空间在不同时间完全是两个样子。有经验的设计师会在工地待一整天：早上看东向的窗户有多亮，中午看顶光打在哪里，傍晚看西晒会不会刺眼。这些图纸上都不会写——只有身体在现场，才能感受到光是怎么"流动"的。',
+        structure: { reference: '设计师去工地的第一件事不是看图纸，而是看光线。光在一天中不断变化——早晨、中午、傍晚的光从不同方向照进来，同一个空间呈现出完全不同的状态。有经验的设计师会在工地待满一整天，感受光在空间里的流动方式。这些信息图纸上不会标注出来，只有身体在现场才能捕捉到。' }
+      },
+      {
+        id: 'f2',
+        subType: 'retell',
+        topic: '阅读以下文字，然后用自己的话不停顿地复述',
+        material: '日本的茶室有一个很小的入口，叫"躙口"，只有大约70厘米见方。所有人——不管是将军还是商人——都必须弯腰低头才能钻进去。这个设计的用意不是为难人，而是创造一种"平等"：在茶室里，世俗的等级消失了。钻进去的那一瞬间，你不得不放下身段——不管你在外面是多大的官。空间设计在这里不是在解决功能，是在创造仪式。',
+        structure: { reference: '日本茶室设计了一个很小的入口叫"躙口"，大约70厘米见方，所有人——无论身份高低——都必须弯腰低头才能进入。这个设计的目的不是制造困难，而是创造平等——进入茶室的瞬间，世俗的等级被空间设计消解了。不管在外面是什么身份，钻进去的那一刻都必须放下身段。这说明空间设计不只是解决功能问题，也可以创造仪式感。' }
+      },
+      {
+        id: 'f3',
+        subType: 'blindOutput',
+        topic: '闭眼，选一个话题连续说2分钟不睁眼。话题建议：今天工地上最让你注意的一个细节',
+        material: null,
+        structure: { reference: '（参考输出示例）今天进工地的时候，我注意到工人正在贴厨房的墙砖。他从中间开始贴，不是从底边开始。我问他为什么——他说从中间往四周贴，可以保证整个墙面视觉上是居中的，切砖的地方都会在底部和两侧，被橱柜挡住就看不到了。这个细节客户永远不会知道——但住进去之后会感觉"这个厨房怎么这么舒服"，因为眼睛捕捉不到不完整的砖缝。这就是好设计的本质：做完之后让人说不出哪里好，但就是觉得顺眼。' }
+      },
+      {
+        id: 'f4',
+        subType: 'blindOutput',
+        topic: '闭眼，选一个话题连续说2分钟不睁眼。话题建议：最近一次和人聊天，对方说的哪句话让你印象最深',
+        material: null,
+        structure: { reference: '（参考输出示例）前两天和一个做餐饮的朋友聊天，他说了一句话让我想了好久。他说："餐饮不是卖吃的，是卖期待。"他说客人进店之前，脑子里已经有一个想象了——他想吃到什么、感受到什么样的服务、拍照发朋友圈是什么效果。如果实际体验低于这个想象，再好吃也会觉得失望。如果实际体验高于这个想象，普通的菜也会被记住。所以餐饮的核心不是厨房，是管理用户的预期。这句话让我联想到设计行业——客户找设计师，也不是买图纸，而是买对"未来的家"的期待。如果设计过程中让客户的期待落空了，再好的方案也是失败的。' }
+      },
+      {
+        id: 'f5',
+        subType: 'streamOutput',
+        topic: '描述你今天进工地的第一分钟——看到了什么、听到了什么、闻到了什么',
+        material: null,
+        structure: { reference: '（参考输出示例）推开工地门的瞬间，一股水泥和木屑混合的气味先涌进鼻子。眼睛花了大概两秒钟才适应室内外光线的落差——外面是大太阳，里面因为窗户还没装，光线是斜着进来的，在地上拉出几道长长的亮斑。耳边是电钻的尖锐声和一个工人哼歌的低音——他在用四川口音的普通话说"这个墙角再补一刀"。地上是一层薄薄的灰，踩上去有细细的沙沙声。客厅中央堆着几摞瓷砖，包装上的塑料膜在风里轻微地响。' }
+      },
+      {
+        id: 'f6',
+        subType: 'streamOutput',
+        topic: '描述你上次在咖啡馆坐下来第一分钟的感受——声音、气味、光线、温度',
+        material: null,
+        structure: { reference: '（参考输出示例）推开咖啡馆的门，一股深烘咖啡豆的焦香加上热牛奶的甜味扑过来。冷气开得很足，和外面30度的热形成了明显的温差——肩膀上能感觉到凉意。背景是磨豆机的嗡嗡声加上爵士乐里的钢琴三重奏，不高不低刚好能遮住隔壁桌的聊天。阳光从落地窗斜进来，在木桌上画了一道暖黄色的边界线。我选了窗边的位置——因为那里光最好，但也最热，是一种让人愿意坐下来不走的暖。' }
+      },
+      {
+        id: 'f7',
+        subType: 'destinationFirst',
+        topic: '阅读以下文字，先写/说一句"最核心的意思是…"，再展开复述',
+        material: '哈佛商学院教授克莱顿·克里斯坦森在《创新者的窘境》中提出了一个著名的概念：颠覆性创新。他发现一个奇怪的现象——行业领导者往往是被"看起来更差"的产品打败的。个人电脑刚出来时，性能远不如大型机，但它便宜、小巧，开辟了一个全新的市场——个人用户。大型机公司继续服务他们的高端客户，听着客户说"我们要更快更大的机器"，等他们反应过来，整个市场已经转向了。克里斯坦森总结说：优秀的公司之所以失败，不是因为他们做得不好，恰恰是因为他们做得太好了——他们太听现有客户的话，而忽略了来自边缘的威胁。',
+        structure: {
+          destinationHeader: '最核心的意思是：优秀公司的失败恰恰源于"太听客户的话"——当你只聚焦现有客户的需求时，会忽略来自边缘的颠覆。',
+          reference: '克里斯坦森发现了一个反直觉的现象：行业的领先者往往被"更差"的产品颠覆，而不是更好的产品。原因是优秀公司太专注于服务现有客户——客户说"要更快更大"，他们就做更快更大。但颠覆者做的是"够用但便宜"，先从一个不起眼的边缘市场起步。等领先者反应过来，整个市场已经换了赛道。这个理论的底层逻辑是：真正威胁你的不是竞争对手做得比你好，而是他们做的是你"不屑做"的事。'
+        }
+      },
+      {
+        id: 'f8',
+        subType: 'destinationFirst',
+        topic: '阅读以下文字，先写/说一句"最核心的意思是…"，再展开复述',
+        material: '建筑师路易斯·康有一个经典的设计哲学：他问砖"你想成为什么"，然后按照砖的意愿去设计。听起来很玄，但他的意思是：每一种材料都有自己的本性——砖抗压不抗弯，所以适合做墙和拱，不适合做长跨度的梁。好的设计不是强加一个形式给材料，而是倾听材料的本性，然后让形式从材料中"生长"出来。康说："一栋伟大的建筑必须从不可测量的东西开始，经过可测量的设计过程，最终回到不可测量的体验中去。"',
+        structure: {
+          destinationHeader: '最核心的意思是：好的设计不是把形式强加给材料，而是让形式从材料的本性中自然产生。',
+          reference: '路易斯·康的设计哲学核心是"问材料想成为什么"——不是设计师单方面决定形式，而是尊重每种材料的物理本性和结构逻辑。砖适合受压，所以做拱；木材适合受弯，所以做梁。好的设计过程是：从不可测量的直觉出发（这个空间应该是什么感觉），经过可测量的技术过程（结构、材料、尺度），最终回到不可测量的体验（人在空间里的感受）。这个三段式揭示了所有好设计的底层逻辑——技术是手段，体验是终点。'
+        }
+      }
+    ]
+  },
+
+  expansion: {
+    title: '聊天扩写',
+    icon: '💬',
+    hint: '一个观点 → 展开说透',
+    aiHint: 'AI实时生成观点 · 自由展开 · 智能评分',
+    instruction: '题目是一个核心观点。用语音展开它——目标是让听的人觉得"原来如此"。不需要用固定结构。\n\n💡 思考方向（选顺手的用）：\n① 跳到另一个维度重新定义问题\n② 翻转看"不这样做会失去什么"\n③ 用你经历过的一个具体瞬间把抽象变具体',
+    items: [
+      {
+        id: 'ex1',
+        topic: '「好的设计是解决问题，不是制造效果」',
+        structure: {
+          reference: '很多人以为设计的价值是"好看"，但设计真正的第一性是解决问题。好看是正确解决问题之后自然涌现的副产品。举一个例子：一个设计师给厨房台面做了高低分区的设计——水槽区比灶台区高了8公分，为什么？因为他观察到这个客户身高168cm，洗菜时要弯腰，炒菜时要抬臂。这8公分的差距解决了两个日常的微痛苦。客户说不出哪里好，但入住后发现"做饭不累了"。这就是设计——美是正确解决问题之后自然涌现的结果，而不是强加上去的装饰。反过来想：如果解决了100个小问题但看起来不"出彩"的设计，和看起来惊艳但让用户每天多走8步路的设计——哪个更值钱？三年前选了效果的客户，三年后已经开始考虑翻新了；选了解決问题的客户，三年后还在给设计师介绍新客户。',
+          goldenQuotes: ['设计的第一性是解决问题——美是正确解决问题之后自然涌现的结果。', '用户说不出哪里好但觉得舒服，是因为你替ta挡掉了100个微小摩擦。']
+        }
+      },
+      {
+        id: 'ex2',
+        topic: '「客户说不出来的需求，才是设计师真正的战场」',
+        structure: {
+          reference: '客户说"我要很多柜子"——表面是收纳需求，深层是对失控的恐惧。客户说"我要高级感"——表面是审美需求，深层是"这个房子配得上我"的自我确认。客户说"我随便，你定就好"——表面是放手，深层是不想为决策承担后果。最好的设计师不是最会画图的，是最会"翻译"的——把客户模糊的情绪翻译成具体的设计决策。这就像医生不能只听患者说"我头疼"就开药——你得问：什么时候疼？哪个位置？持续多久？然后才能判断是偏头痛还是颈椎问题。设计师也一样：客户说"我喜欢简约"，你得追问"你能给我看一张你觉得简约的图吗"——因为每个人心中的简约不一样。翻译能力才是设计师的核心竞争力——不翻就做，做的全是错的。',
+          goldenQuotes: ['客户说不出来的需求，才是设计师真正的战场。', '最好的设计师不是画图的，是翻译的——把模糊情绪翻译成具体决策。']
+        }
+      },
+      {
+        id: 'ex3',
+        topic: '「装修最贵的不是材料，是返工」',
+        structure: {
+          reference: '返工的成本不是1+1=2，是1×3=3——材料费+拆除费+重新做的费，还要加上信任的损耗。我见过一个项目：客户省了500元的打样费，结果瓷砖贴完了才发现色差，砸掉重贴花了6000元，工期还延了两周。这500元省出来的是12倍的损失。但比钱更贵的是信任——返工一次，工人觉得设计师不专业，客户觉得装修公司不靠谱，三方互信逐渐瓦解。一个项目返工三次之后，工人和设计师基本就互不沟通了，客户每天在群里吵架。反过来想：花500元打样确认，不是消费，是保险——花小钱避免大损失。每次我问客户"要不要打个样"，客户觉得我在推销——但这不是推销，是我见过太多人在这上面翻车了。',
+          goldenQuotes: ['返工的成本不是1+1=2，是1×3=3——材料费+拆除费+重做费+信任损耗。', '500元的打样费不是消费，是避免5000元返工的保险。']
+        }
+      },
+      {
+        id: 'ex4',
+        topic: '「设计师最大的价值不是画图，是替客户做决策」',
+        structure: {
+          reference: '很多人觉得设计师就是画图的——你把需求告诉我，我把图纸给你。但真正的好设计师不是绘图员，是决策者。客户一辈子装修2-3次，设计师一年做50个项目——这不是品味差距，是样本量差距。一个插座为什么是85cm高而不是75cm？因为设计师见过100个家庭弯腰插充电器的样子。一块地板为什么选哑光不选亮光？因为设计师见过10个客户在亮光地板上每天拖三次地。客户付费买的表面是图纸，实际买的是"有人替我做决定而且为结果负责"的心安。反过来看：如果一个设计师只是把客户的想法画出来，不做任何专业判断，那他跟绘图软件的区别是什么？客户完全可以自己用AI生成图纸——但那不是设计，那只是画图。',
+          goldenQuotes: ['设计师一年做50次决策 vs 客户一辈子做2次——这不是品味差距，是样本量差距。', '客户付费买的不是图纸，是"有人替我做决定"的心理安全感。']
+        }
+      },
+      {
+        id: 'ex5',
+        topic: '「倾听是设计师最被低估的能力」',
+        structure: {
+          reference: '大多数设计师第一次见客户都在"推销"——翻着案例集，讲着设计理念，展示着专业能力。但最好的设计师第一次见面主要是听。为什么？因为听比说有三大优势：第一，信息优势——当客户连续说了15分钟而被你认真听完时，ta会无意识地说出真正在意的东西。那些东西往往不是"我喜欢什么风格"，而是"我婆婆每个月来住一周"这种生活细节——这个细节决定了客房的动线设计。第二，信任优势——客户说完了发现"你是第一个认真听我说的设计师"，信任在那一刻就建立了。第三，效率优势——前期多听1小时，后期少改10小时。大多数7版方案的修改，根源都是第一版就没听懂客户在说什么。我自己的体验：有一个项目改了5版客户都说不满意，后来我放弃介绍方案，跟客户喝了一次茶什么方案都没聊——只是听ta说ta的家庭、ta的习惯、ta的担忧。那一次之后，下一版方案一稿过。不是因为方案变好了，是因为我终于听懂了。',
+          goldenQuotes: ['设计师打断客户的那一刻，损失的不是时间，是信任。', '前期多听1小时，后期少改10小时——倾听是最便宜的改稿保险。']
+        }
+      },
+      {
+        id: 'ex6',
+        topic: '「预算不是限制，是帮客户做取舍的工具」',
+        structure: {
+          reference: '很多人觉得预算是敌人——束缚了发挥空间。但预算是设计师最好的朋友。为什么？因为没有预算约束的设计是盲目的——你会想把每样东西都做"最好"，但"最好"是没有上限的。预算逼你做一件事：取舍。而取舍恰恰是设计师的核心能力。预算是把"无穷多的选项"压缩到"可管理的决策范围"里。好的设计师怎么做？把钱从"没人会在意的地方"省出来，砸到"每天都会感受到的地方"。比如：瓷砖选国产优等品而不是进口——差价3000元，效果差别肉眼看不出来；但把这3000元加到床垫上——客户每天8小时的身体接触，差异是天上地下。这就是取舍的智慧。反过来：没有预算意识的"自由设计"，往往是把钱平均撒在每个角落，结果每个角落都是60分。',
+          goldenQuotes: ['预算不是限制，是帮客户做取舍的工具——没有预算就没有重点。', '把钱从"没人会在意的地方"省出来，砸到"每天都会感受到的地方"。']
+        }
+      },
+      {
+        id: 'ex7',
+        topic: '「风格的终点不是好看，是"像你"」',
+        structure: {
+          reference: '小红书上有无数种风格——侘寂、极简、法式、中古……但所有这些风格都是别人总结出来的模板，不是你的生活。好的设计不是把一种风格套在你家，而是把你的生活方式翻译成空间语言。你喜欢在沙发上看书？那把阅读灯放在沙发的左边还是右边就比选什么风格的沙发重要10倍。你每周做三次饭？那厨房的动线怎么走就比台面用什么材料重要10倍。风格是果，生活方式是因。我见过一个最让我触动的案例：一个客户家完全没有"风格"可定义——客厅有一面墙是他和女儿每周画的涂鸦，厨房是他在日本留学时学会的日式布局。来访的朋友说"这房子太像你了"——这就是最好的设计。不像任何风格，只像住在里面的人。反过来看：那些照着网红模板装出来的房子，好看是好看了，但住进去总感觉"这是别人的家"。',
+          goldenQuotes: ['风格的终点不是好看，是"像你"。', '不像任何一种风格，只像住在里面的人——这是设计的最高评价。']
+        }
+      },
+      {
+        id: 'ex8',
+        topic: '「设计沟通中，把专业术语翻译成人话是最被低估的能力」',
+        structure: {
+          reference: '设计师学了几年专业，满脑子术语：动线、明堂、气口、开敞、半透、界面……但客户听到这些话就像在听外语，听了但没懂。最厉害的设计师是什么样的？他能把所有专业判断翻译成客户自己的体验。不说"这个动线效率有问题"，说"您这样走，每天要多走8步路"——客户立刻懂了。不说"色温接近2700K更舒适"，说"这种光会让您躺下十分钟就想睡觉"——客户立刻懂了。不说"需要有过渡空间"，说"您不想客人一开门就看到您的卧室对吧"——客户立刻懂了。翻译能力的本质是什么？是站在客户的感知世界里讲话，而不是站在专业的知识体系里讲话。我自己的体验：有一次跟一个客户讲"功能区要做静动分离"，客户皱着眉敷衍点头。后来我说"您女儿在房间写作业，您和太太在客厅聊天——如果隔音不好，你们一说话她就分心"。客户愣了一下说"对对对，这个一定要处理好"。同一件事，不同的说法，一个被忽略，一个被记住。',
+          goldenQuotes: ['不说"动线效率有问题"，说"您每天要多走8步路"——这就是翻译力。', '专业术语在客户耳朵里是噪音，翻译成生活体验才是信息。']
+        }
+      }
+    ]
   }
 };
 
@@ -1742,6 +1966,7 @@ function showScreen(name) {
   if (name === 'home') updateHome();
   if (name === 'progress') { updateProgress(); setTimeout(() => { drawGrowthChart(); drawRadarChart(); }, 100); }
   if (name === 'ranking') loadRanking('total');
+  if (name === 'reflection') renderReflection();
   window.scrollTo(0, 0);
 }
 
@@ -1965,7 +2190,7 @@ async function startExercise(type, forceItemId) {
   $('btn-timer').classList.remove('on');
 
   // Suggested time for narrative modes vs quick modes
-  const quickModes = ['pyramid', 'multiAngle', 'prep'];
+  const quickModes = ['pyramid', 'multiAngle', 'prep', 'flow'];
   const isQuick = quickModes.includes(type);
   $('timer-display').textContent = isQuick ? '建议用时 1-2 分钟' : '建议用时 3-5 分钟，展开叙述';
 
@@ -2167,6 +2392,42 @@ function buildInputs(type, item) {
       addInput(container, '复述内容', '用自己的话复述原文核心内容', 'retelling', true);
       addInput(container, '个人评论', '你对这个观点/事件的看法和分析', 'comment', true);
     }
+  } else if (type === 'flow') {
+    const subType = item.subType || 'blindOutput';
+    // Show material for retell and destinationFirst
+    if (subType === 'retell' || subType === 'destinationFirst') {
+      if (item.material) {
+        const matDiv = document.createElement('div');
+        matDiv.className = 'flow-material';
+        matDiv.innerHTML = `<span class="flow-material-label">📖 阅读材料（看完后开始语音输出）</span>${item.material}`;
+        container.appendChild(matDiv);
+      }
+      if (subType === 'destinationFirst') {
+        addInput(container, '① 先定终点', '用一句话说清楚：这段文字最核心的一个意思是……', 'destination', true);
+        addInput(container, '② 展开复述', '不停、不改、不回头地复述整段内容', 'output', true);
+      } else {
+        addInput(container, '复述内容', '用自己的话不停顿地复述。规则：不停、不改、不回头。', 'output', true);
+      }
+    } else {
+      // blindOutput / streamOutput: no material, just output
+      addInput(container, '语音输出', '闭眼或盯住一个点，不停顿地说。规则：不停、不改、不回头。', 'output', true);
+    }
+    // Show subType badge
+    const badgeLabels = { retell: '秒表复述', blindOutput: '闭眼单线程', streamOutput: '流水账', destinationFirst: '终点先行' };
+    const badgeDiv = document.createElement('div');
+    badgeDiv.style.cssText = 'font-size:.68rem;color:var(--text-dim);margin-bottom:12px';
+    badgeDiv.innerHTML = `🏷️ 子模式：<span class="flow-badge">${badgeLabels[subType] || subType}</span>`;
+    container.insertBefore(badgeDiv, container.firstChild);
+  } else if (type === 'expansion') {
+    // Show operation hints
+    const hintsDiv = document.createElement('div');
+    hintsDiv.className = 'expansion-hints';
+    hintsDiv.innerHTML = `<span class="hint-title">💡 思考方向（选顺手的用）</span>
+① 跳到另一个维度重新定义问题<br>
+② 翻转看"不这样做会失去什么"<br>
+③ 用你经历过的一个具体瞬间把抽象变具体`;
+    container.appendChild(hintsDiv);
+    addInput(container, '展开你的观点', '用语音展开。目标是让听的人觉得"原来如此"。不需要套固定框架。', 'expansion', true);
   }
 }
 
@@ -2305,6 +2566,13 @@ function showReview(answers, timeSpent) {
         html += `<div class="answer-block structure-ref"><div class="block-label">参考评论</div><div class="block-content">${struct.comment}</div></div>`;
       }
     }
+  } else if (currentType === 'flow') {
+    if (struct.destinationHeader) {
+      html += `<div class="answer-block structure-ref"><div class="block-label">参考"终点"</div><div class="block-content">${struct.destinationHeader}</div></div>`;
+    }
+    html += `<div class="answer-block structure-ref"><div class="block-label">参考输出</div><div class="block-content">${struct.reference || ''}</div></div>`;
+  } else if (currentType === 'expansion') {
+    html += `<div class="answer-block structure-ref"><div class="block-label">参考展开</div><div class="block-content">${struct.reference || ''}</div></div>`;
   }
 
   // Pre-written golden quotes for autonomous track
@@ -2392,11 +2660,21 @@ const SCORING_DIMS = {
     { key: 'accuracy', label: '信息准确度', desc: '提取的关键信息是否准确、不曲解原意' },
     { key: 'completeness', label: '信息完整度', desc: '是否覆盖了核心信息，有无重大遗漏' },
     { key: 'conciseness', label: '简洁度', desc: '表达是否简洁精准，无冗余废话' }
+  ],
+  flow: [
+    { key: 'fluency', label: '流畅度', desc: '输出是否一气呵成，无明显停顿或反复修改痕迹' },
+    { key: 'completeness', label: '完整度', desc: '核心信息是否覆盖完整（有材料）或自圆其说（无材料）' },
+    { key: 'vividness', label: '生动度', desc: '是否包含具体的感官细节，而非停留在抽象概括' }
+  ],
+  expansion: [
+    { key: 'reframe', label: '视角跳转', desc: '是否跳出了表面维度，给人"原来还能这样想"的感觉' },
+    { key: 'concreteness', label: '具体度', desc: '是否有真实的例子、场景或经验作为支撑' },
+    { key: 'impact', label: '感染力', desc: '整体表达是否让人信服、有记忆点，而非听完就忘' }
   ]
 };
 
 // Keep a flat list of all possible dim keys for charts
-const ALL_DIM_KEYS = ['structure', 'logic', 'depth', 'comprehensiveness', 'insight', 'persuasiveness', 'connection', 'creativity', 'fluency', 'expression', 'diagnosis', 'reasoning', 'strategy', 'script', 'penetration', 'clarity', 'accuracy', 'completeness', 'conciseness'];
+const ALL_DIM_KEYS = ['structure', 'logic', 'depth', 'comprehensiveness', 'insight', 'persuasiveness', 'connection', 'creativity', 'fluency', 'expression', 'diagnosis', 'reasoning', 'strategy', 'script', 'penetration', 'clarity', 'accuracy', 'completeness', 'conciseness', 'vividness', 'reframe', 'concreteness', 'impact'];
 
 function getDims(type) { return SCORING_DIMS[type] || SCORING_DIMS['pyramid']; }
 
@@ -2643,6 +2921,77 @@ function buildTopicPrompt(type) {
 
     return '';
   }
+  if (type === 'flow') {
+    // Randomly pick a subType
+    const subTypes = ['retell', 'blindOutput', 'streamOutput', 'destinationFirst'];
+    const pickedSubType = subTypes[Math.floor(Math.random() * subTypes.length)];
+
+    if (pickedSubType === 'retell') {
+      return base + `生成一个"秒表复述"训练的阅读材料：
+{
+  "subType": "retell",
+  "topic": "阅读以下文字，然后用自己的话不停顿地复述",
+  "material": "<一篇约120-200字的短文，内容有实质信息但不过于复杂。可以是设计/商业/心理/生活领域的有趣观察或小故事>",
+  "structure": {
+    "reference": "<参考复述：用连贯、准确的语言复述原文核心内容，150-250字，一气呵成>"
+  }
+}
+要求：短文信息密度适中，有明确的核心意思，易于复述。用中文，直接返回JSON。`;
+    }
+
+    if (pickedSubType === 'blindOutput') {
+      return base + `生成一个"闭眼单线程"训练的话题：
+{
+  "subType": "blindOutput",
+  "topic": "<话题建议，如'闭眼，选一个话题连续说2分钟不睁眼。话题建议：…'>",
+  "material": null,
+  "structure": {
+    "reference": "<参考输出示例：连续、有细节、有具体感官体验的输出，200-300字>"
+  }
+}
+要求：话题要足够日常、容易展开（如"今天印象最深的一个画面""最近学到的一个东西""一个让你重新想一件事的瞬间"）。参考输出要展示"不停顿地说"的感觉——口语化、有自然过渡、有具体细节。用中文，直接返回JSON。`;
+    }
+
+    if (pickedSubType === 'streamOutput') {
+      return base + `生成一个"流水账展开"训练的话题：
+{
+  "subType": "streamOutput",
+  "topic": "<话题，如'描述你今天进工地的第一分钟——看到了什么、听到了什么、闻到了什么'>",
+  "material": null,
+  "structure": {
+    "reference": "<参考输出：用具体的感官细节（视觉/听觉/触觉/嗅觉）展开一个日常场景，200-300字，有画面感和沉浸感>"
+  }
+}
+要求：话题引导用户描述一个具体的场景或时刻，强调感官细节（看到什么、听到什么、闻到什么、感觉到什么）。参考输出要展示"画面→语音"的丝滑转换。用中文，直接返回JSON。`;
+    }
+
+    if (pickedSubType === 'destinationFirst') {
+      return base + `生成一个"终点先行"训练的阅读材料：
+{
+  "subType": "destinationFirst",
+  "topic": "阅读以下文字，先写/说一句'最核心的意思是…'，再展开复述",
+  "material": "<一篇约120-200字的短文或观点，有明确的核心意思但需要用户自己提炼>",
+  "structure": {
+    "destinationHeader": "<一句话概括核心意思（参考"终点"）>",
+    "reference": "<参考完整复述：150-250字，先亮终点再展开>"
+  }
+}
+要求：短文有明确的核心观点但不过于直白——用户需要自己提炼"终点"。destinationHeader要精炼（20字以内）。用中文，直接返回JSON。`;
+    }
+
+    return '';
+  }
+  if (type === 'expansion') {
+    return base + `生成一个"聊天扩写"训练的核心观点：
+{
+  "topic": "<一个可展开的核心观点，如'好的设计是解决问题，不是制造效果'>",
+  "structure": {
+    "reference": "<参考展开：包含至少一种'帮别人省思考成本'的操作——视角跳转/代价翻转/经验落地。200-400字，自然的口语表达，有说服力和记忆点>",
+    "goldenQuotes": ["<从展开中提炼的金句1，15-40字>", "<金句2>"]
+  }
+}
+要求：核心观点要有展开空间——不能太狭窄或太明显。话题覆盖设计/沟通/职场/个人成长等领域。reference要示范如何把抽象观点落地到具体经验和场景。用中文，直接返回JSON。`;
+  }
   return '';
 }
 
@@ -2727,6 +3076,8 @@ async function generateAiTopic(type) {
     if (parsed.researchHints) item.researchHints = parsed.researchHints;
     if (parsed.material) item.material = parsed.material;
     if (parsed.stage) item.stage = parsed.stage;
+    if (parsed.subType) item.subType = parsed.subType;
+    if (parsed.subLabels) item.subLabels = parsed.subLabels;
 
     return item;
   } catch (e) {
@@ -2777,15 +3128,24 @@ function buildScoringPrompt(entry, dims) {
     } else if (itemStage === 'retellTimed') {
       refLines = `参考复述：${struct.retelling || ''}\n参考评论：${struct.comment || ''}`;
     }
+  } else if (entry.type === 'flow') {
+    const subType = entry._item?.subType || '';
+    if (subType === 'destinationFirst' && struct.destinationHeader) {
+      refLines = `参考"终点"（一句话概括）：${struct.destinationHeader}\n参考完整输出：${struct.reference || ''}`;
+    } else {
+      refLines = `参考输出：${struct.reference || ''}`;
+    }
+  } else if (entry.type === 'expansion') {
+    refLines = `参考展开：${struct.reference || ''}`;
   }
 
-  // Include reading material for infoProcess scoring
+  // Include reading material for infoProcess and flow scoring
   let materialSection = '';
-  if (entry.type === 'infoProcess' && entry._item.material) {
+  if ((entry.type === 'infoProcess' || entry.type === 'flow') && entry._item.material) {
     materialSection = `\n【阅读材料】\n${entry._item.material}\n`;
   }
 
-  const isNewMode = entry.type === 'needInsight' || entry.type === 'essence';
+  const isNewMode = entry.type === 'needInsight' || entry.type === 'essence' || entry.type === 'flow' || entry.type === 'expansion';
   const methodologyJson = isNewMode ? `
   "thinking_methodology": {
     "framework": "<你使用的思维框架名称，如"冰山模型""剥洋葱法""本质追问法"等>",
@@ -3480,6 +3840,9 @@ function getUserFieldLabel(key) {
   if (key === 'point3') return '要点三';
   if (key === 'retelling') return '复述内容';
   if (key === 'comment') return '个人评论';
+  if (key === 'output') return '你的输出';
+  if (key === 'expansion') return '你的展开';
+  if (key === 'destination') return '先说终点';
   return key;
 }
 
@@ -3851,6 +4214,27 @@ async function showDetail(index) {
       html += `<div class="detail-answer structure-ref"><div class="da-label">表面现象</div><div class="da-content">${s.phenomenon || ''}</div></div>`;
       html += `<div class="detail-answer structure-ref"><div class="da-label">本质洞察</div><div class="da-content">${s.essence || ''}</div></div>`;
       html += `<div class="detail-answer structure-ref"><div class="da-label">思考路径</div><div class="da-content">${s.thinkingPath || ''}</div></div>`;
+    } else if (h.type === 'flow') {
+      if (s.destinationHeader) {
+        html += `<div class="detail-answer structure-ref"><div class="da-label">参考"终点"</div><div class="da-content">${s.destinationHeader}</div></div>`;
+      }
+      html += `<div class="detail-answer structure-ref"><div class="da-label">参考输出</div><div class="da-content">${s.reference || ''}</div></div>`;
+    } else if (h.type === 'expansion') {
+      html += `<div class="detail-answer structure-ref"><div class="da-label">参考展开</div><div class="da-content">${s.reference || ''}</div></div>`;
+    } else if (h.type === 'infoProcess') {
+      const itemStage = h._item?.stage || 'extract';
+      if (itemStage === 'extract' && s.keywords) {
+        html += `<div class="detail-answer structure-ref"><div class="da-label">参考关键词</div><div class="da-content">${s.keywords.join('、')}</div></div>`;
+      } else if (itemStage === 'summarize' && s.summary) {
+        html += `<div class="detail-answer structure-ref"><div class="da-label">参考总结</div><div class="da-content">${s.summary}</div></div>`;
+      } else if (itemStage === 'retell' && s.points) {
+        s.points.forEach((p, i) => {
+          html += `<div class="detail-answer structure-ref"><div class="da-label">参考要点${i + 1}</div><div class="da-content">${p}</div></div>`;
+        });
+      } else if (itemStage === 'retellTimed') {
+        if (s.retelling) html += `<div class="detail-answer structure-ref"><div class="da-label">参考复述</div><div class="da-content">${s.retelling}</div></div>`;
+        if (s.comment) html += `<div class="detail-answer structure-ref"><div class="da-label">参考评论</div><div class="da-content">${s.comment}</div></div>`;
+      }
     }
     html += '</div>';
   } else {
@@ -4235,6 +4619,126 @@ function updateReadingHeader() {
   // The favorites link is shown in the actions when content exists
 }
 // ======== END READING ROOM ========
+
+// ======== DAILY REFLECTION ========
+const REFLECTION_QUESTIONS = [
+  '今天有什么事情，我当时的判断是错的？',
+  '今天听到的哪句话让我重新想了一件事？',
+  '如果重来一次，我会做什么不同的选择？'
+];
+
+function getReflections() {
+  try { return JSON.parse(localStorage.getItem('tt_reflections') || '[]'); } catch { return []; }
+}
+
+function saveReflections(data) {
+  try { localStorage.setItem('tt_reflections', JSON.stringify(data)); } catch(e) { /* storage full or unavailable */ }
+}
+
+function getReflectionStreak() {
+  const refs = getReflections();
+  if (!refs.length) return 0;
+  const today = new Date().toDateString();
+  let streak = 0;
+  const seen = new Set();
+  for (const r of refs) {
+    const d = new Date(r.date).toDateString();
+    if (seen.has(d)) continue;
+    seen.add(d);
+    const target = new Date(Date.now() - streak * 86400000).toDateString();
+    if (d === target) {
+      streak++;
+    } else break;
+  }
+  // Check if today already counted
+  if (refs[0] && new Date(refs[0].date).toDateString() === today) {
+    return streak;
+  }
+  // Streak is based on consecutive past days; today's absence doesn't break it
+  return streak;
+}
+
+function renderReflection() {
+  const container = document.getElementById('reflection-questions');
+  const today = new Date().toDateString();
+  const refs = getReflections();
+  const todayRef = refs.find(r => new Date(r.date).toDateString() === today);
+  const todayAnswers = todayRef ? todayRef.answers : ['', '', ''];
+
+  container.innerHTML = REFLECTION_QUESTIONS.map((q, i) => `
+    <div class="reflection-q"><span class="q-num">${i + 1}</span>${q}</div>
+    <textarea id="reflection-a${i}" placeholder="写下你的真实想法…" rows="3">${escapeHtml(todayAnswers[i] || '')}</textarea>
+  `).join('');
+
+  document.getElementById('reflection-streak-count').textContent = getReflectionStreak();
+  document.getElementById('reflection-history').style.display = 'none';
+}
+
+function saveReflection() {
+  const answers = [];
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById('reflection-a' + i);
+    answers.push(el ? el.value.trim() : '');
+  }
+  const hasContent = answers.some(a => a.length > 0);
+  if (!hasContent) {
+    toast('请至少回答一个问题');
+    return;
+  }
+
+  const refs = getReflections();
+  const today = new Date().toDateString();
+  const todayIdx = refs.findIndex(r => new Date(r.date).toDateString() === today);
+
+  const entry = {
+    date: new Date().toISOString(),
+    answers
+  };
+
+  if (todayIdx >= 0) {
+    refs[todayIdx] = entry;
+  } else {
+    refs.unshift(entry);
+    // Keep max 90 entries
+    if (refs.length > 90) refs.length = 90;
+  }
+
+  saveReflections(refs);
+  document.getElementById('reflection-streak-count').textContent = getReflectionStreak();
+  toast('反思已保存 🌙');
+}
+
+function toggleReflectionHistory() {
+  const container = document.getElementById('reflection-history');
+  if (container.style.display === 'none') {
+    const refs = getReflections();
+    if (!refs.length) {
+      container.innerHTML = '<div class="empty-state">还没有反思记录<br>开始你的第一次反思吧</div>';
+    } else {
+      container.innerHTML = refs.slice(0, 30).map(r => {
+        const d = new Date(r.date);
+        const dateStr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+        const answers = (r.answers || []).map((a, i) => {
+          if (!a) return '';
+          return `<div class="rh-answer"><span class="rh-q">${REFLECTION_QUESTIONS[i]}</span><br>${escapeHtml(a)}</div>`;
+        }).filter(Boolean).join('');
+        return `<div class="reflection-history-item">
+          <div class="rh-date">🌙 ${dateStr}</div>
+          ${answers}
+        </div>`;
+      }).join('');
+    }
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 // ======== INIT ========
 (async function init() {
