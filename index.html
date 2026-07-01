@@ -799,6 +799,26 @@ body {
   <div id="reading-fav-list"></div>
 </section>
 
+
+	<!-- Reflection Screen -->
+	<section id="reflection" class="screen">
+	  <div class="progress-header">
+	    <button class="btn-back" onclick="showScreen('home')">←</button>
+	    <span style="font-weight:600">每日反思</span>
+	  </div>
+	  <div class="reflection-streak">
+	    🌙 连续反思 <span class="streak-num" id="reflection-streak-count">0</span> 天
+	  </div>
+	  <div class="reflection-section" id="reflection-questions"></div>
+	  <div class="ex-actions">
+	    <button class="btn-submit" onclick="saveReflection()">保存反思</button>
+	  </div>
+	  <div style="text-align:center;margin-top:12px">
+	    <button class="btn-text" onclick="toggleReflectionHistory()">📋 查看历史</button>
+	  </div>
+	  <div id="reflection-history" style="display:none;margin-top:16px"></div>
+	</section>
+
 </div>
 
 <!-- Settings Modal -->
@@ -832,27 +852,9 @@ body {
       <button class="btn-submit" style="flex:0;padding:8px 20px;font-size:.82rem" onclick="saveApiKey()">保存</button>
     </div>
   </div>
-	<!-- Reflection Screen -->
-	<section id="reflection" class="screen">
-	  <div class="progress-header">
-	    <button class="btn-back" onclick="showScreen('home')">←</button>
-	    <span style="font-weight:600">每日反思</span>
-	  </div>
-	  <div class="reflection-streak">
-	    🌙 连续反思 <span class="streak-num" id="reflection-streak-count">0</span> 天
-	  </div>
-	  <div class="reflection-section" id="reflection-questions"></div>
-	  <div class="ex-actions">
-	    <button class="btn-submit" onclick="saveReflection()">保存反思</button>
-	  </div>
-	  <div style="text-align:center;margin-top:12px">
-	    <button class="btn-text" onclick="toggleReflectionHistory()">📋 查看历史</button>
-	  </div>
-	  <div id="reflection-history" style="display:none;margin-top:16px"></div>
-	</section>
-
-
 </div>
+
+
 
 <div class="toast" id="toast"></div>
 
